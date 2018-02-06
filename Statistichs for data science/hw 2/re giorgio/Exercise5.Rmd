@@ -1,0 +1,1409 @@
+---
+title: 'Homework #2'
+author: |
+  | Stat4DS2+DS
+  | <https://elearning2.uniroma1.it/course/view.php?id=4951>
+date: '**deadline 23/05/2017 (23:55)**'
+output:
+  pdf_document:
+    keep_tex: yes
+    toc: no
+header-includes: \usepackage{graphicx}
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Your Last+First Name __GIANNONE_GIORGIO__ Your Matricola __1309829__
+
+1a)  Illustrate the characteristics of the statistical model for dealing with the *Dugong*'s data. Lengths ($Y_i$)  and  ages ($x_i$) of  27 Dugongs have been recorded and the
+  following (non linear)  regression model is considered:
+\begin{eqnarray*}
+Y_i &\sim& N(\mu_i, \tau^2) \\
+\mu_i=f(x_i)&=& \alpha - \beta \gamma^{x_i}\\
+\end{eqnarray*}
+Model parameters are
+$\alpha \in (1, \infty)$,
+$\beta \in (1, \infty)$,
+$\gamma \in (0,1)$,
+$\tau^2 \in (0,\infty)$. 
+Let us consider the following prior distributions:
+\begin{eqnarray*}
+\alpha &\sim&  N(0,\sigma^2_{\alpha})\\
+\beta  &\sim&  N(0,\sigma^2_{\beta}) \\
+\gamma &\sim&  Unif(0,1)\\
+\tau^2 &\sim&  IG(a,b)) (Inverse Gamma)
+\end{eqnarray*}
+
+
+1b)  Derive the corresponding likelihood function
+
+In this case, fixed the parameters, $Y_i|\tau^2,\mu_i \sim N(\mu_i, \tau^2)$; so to obtain the corresponding likelihood function we have to compute $L(\theta) = f(y_1,....,y_n|\mu,\tau^2)$; and because the observations are conditionally indipendent and identically distributed we can write
+\[
+L(\theta) = \prod_{i=1}^n f(y_i|\mu_i,\tau^2) = \frac{\tau^{-n}}{(2\pi)^{n/2}}  \exp\{ -\frac{1}{2}\sum_{i=1}^n (y_i - \mu_i)^2 \tau^{-2} \}
+\]
+where $\mu_i = \alpha - \beta \gamma^{x_i}$.
+The likelihood is a function of $\alpha,\beta,\gamma,\tau^2$.
+
+
+1c)  Write down the expression of the joint prior distribution of the parameters at stake and illustrate your suitable choice for the hyperparameters.
+
+The joint prior is $\pi(\alpha,\beta,\gamma,\tau^2)$ and because the parameters are reciprocally indipendents we can write
+$\pi(\alpha)\pi(\beta)\pi(\gamma)\pi(\tau^2)$ and finally
+\[
+\pi(\theta) = \frac{1}{\sqrt{2\pi \sigma_{\alpha}^2}}\exp\{-\frac{1}{2}(\alpha^2\sigma_{\alpha}^{-2})\}  \frac{1}{\sqrt{2\pi \sigma_{\beta}^2}}\exp\{-\frac{1}{2}(\beta^2\sigma_{\beta}^{-2})\} I_{[0,1]} 
+\frac{b^a}{\Gamma(a)} \tau_2^{(-a-1)} \exp(-\frac{b}{\tau^2})
+\]
+
+```{r 1c}
+
+setwd("~/Dropbox/University/SECOND_SEMESTER/SDS2/HWs/HW2")
+require(invgamma)
+
+dugong = read.table("dugong-data.txt",header = TRUE)
+dugong
+X = dugong$Age
+Y = dugong$Length
+Y
+plot(X, Y, xlab = "Age", ylab = "Length", col = "blue", main = "dugong's data")
+
+mean_y = mean(Y)
+var_y = var(Y)
+
+mean_y
+var_y
+
+###############################################################################
+
+## create useful functions
+
+#alpha
+dAlpha = function(x, sigma_alpha){
+    
+    res = dnorm(x, mean = 0, sd = sqrt(sigma_alpha)) * (x > 1)
+    return (res)
+}
+dAlpha_normalized = function(x, sigma_alpha){
+    
+    den = integrate(function(x) dAlpha(x,sigma_alpha),
+                    lower = -Inf, upper =  +Inf)[[1]]
+    
+    return (dAlpha(x,sigma_alpha)/den)
+}
+curve( dAlpha_normalized(x, 2) ,0,10, xlab = "alpha", ylab = "p(alpha)")
+integrate(function(x) dAlpha_normalized(x,2),lower = -Inf, upper =  +Inf)
+
+#beta
+dBeta = function(x, sigma_beta){
+    
+    res = dnorm(x, mean = 0, sd = sqrt(sigma_beta)) * (x > 1)
+    
+    return (res)
+}
+dBeta_normalized = function(x, sigma_beta){
+    
+    den = integrate(function(x) dBeta(x,sigma_beta),
+                    lower = -Inf, upper =  +Inf)[[1]]
+    
+    return (dBeta(x,sigma_beta)/den)
+}
+curve( dBeta_normalized(x, 2) ,0,10, xlab = "beta", ylab = "p(beta)")
+integrate(function(x) dBeta_normalized(x,2),lower = -Inf, upper =  +Inf)
+
+#gamma
+dGamma = function(x, min = 0, max = 1){
+    
+    res = dunif(x, min = 0, max = 1)
+    return (res)
+}
+curve( dGamma(x) ,-1,10, xlab = "gamma", ylab = "p(gamma)")
+integrate(function(x) dGamma(x),lower = -Inf, upper =  +Inf)
+
+#tau
+dTau2 = function(x, a, b){
+    
+    res = dinvgamma(x, a, b) * (x > 0)
+    return(res)
+}
+curve( dTau2(x,2,2) ,0,10, xlab = "tau2", ylab = "p(tau2)")
+integrate(function(x) dTau2(x,1,1),lower = 0, upper =  +Inf)
+
+#sample
+rAlpha = function(n, sigma_alpha){
+    
+    res = rnorm(n, mean = 0, sd = sqrt(sigma_alpha))
+    res = res[res > 1]
+    
+    return (res)
+}
+rBeta = function(n, sigma_beta){
+    
+    res = rnorm(n, mean = 0, sd = sqrt(sigma_beta))
+    res = res[res > 1]
+    
+    return (res)
+}
+rGamma = function(n, min = 0, max = 1){
+    
+    res = runif(n, min = min, max = max)
+    return (res[res < 1 && res > 0])
+}
+rTau2 = function(n, a, b){
+    
+    res = rinvgamma(n, a, b)
+    res = res[res >0]
+    return(res)
+}
+
+#use this function to choose the hyperparameters
+mu = function(X, alpha, beta, gamma){
+    res = ( alpha - beta * gamma^(mean(X)))
+    return (res)
+    
+}
+
+# use this function after the fix of the hyperparameters 
+mu_opt = function(X, alpha, beta, gamma){
+    
+    s = min(length(alpha), length(beta), length(gamma))
+        
+    alpha = alpha[1:s]
+    beta  = beta[1:s]
+    gamma = gamma[1:s]
+    
+    res = ( alpha - beta * gamma^(X) )
+    res = res[res > 0]
+    return (res)
+    
+}
+
+
+hist(rAlpha(10000,10), freq = FALSE, col = "green")
+curve(dAlpha(x,10),add = TRUE, col = "red", lwd = 4)
+curve(dAlpha_normalized(x,10),add = TRUE, col = "blue", lwd = 4)
+
+#####################################################################################
+# I decided to choose the hyperparameters for alpha and beta starting choosing some value for alpha and beta to obtain a low number of outcome smaller that zero and bigger than because m_i is length
+
+
+N = 1000
+alpha = seq(1,10,1)
+beta = seq(1,10,1)
+
+choose_alpha_beta = function(N, alpha, beta, lower, upper){
+    
+    out = matrix(NA, nrow = length(alpha), ncol = length(beta))
+    
+    for (i in 1:length(alpha)){
+        for (j in 1:length(beta)){
+            
+            m = mu(30,alpha[i],beta[j],rGamma(N))
+            if (length(m) == 0){
+                m = -1
+            }
+            neg = length(m[ m < lower ]*1)/length(m) + 
+                length(m[ m > upper ]*1)/length(m)
+            out[i,j] = neg
+        }
+    }
+    
+    return (out)
+    }
+
+out = choose_alpha_beta(N, alpha, beta, 0, 4)
+out
+
+#ix = which(out == min(out), arr.ind = TRUE)
+
+# I take these
+alpha_opt = 3
+beta_opt = 2
+
+#------------------------------------------------------------------------------------
+# now choose hyperparameters sigma_alpha and sigma_beta
+#to obtain in average my choice for alpha_opt and beta_opt
+sigma_alpha = seq(1,100,1)
+sigma_beta = seq(1,100,1)
+
+# choose sigma_alpha and sigma_beta
+N = 1000
+
+choose_sigmaAlpha_sigmaBeta = function(N, sigma_alpha, sigma_beta, 
+                                       alpha_opt, beta_opt){
+    
+    err_alpha = rep(NA, nrow = length(sigma_alpha))
+    err_beta = rep(NA, nrow = length(sigma_beta))
+
+    for ( i in 1:length(sigma_alpha) ){
+        
+        alpha = rAlpha(N,sigma_alpha[i])
+        beta = rBeta(N,sigma_beta[i])
+        
+        err_alpha[i] = mean((mean(alpha) - alpha_opt)^2)
+        err_beta[i] = mean((mean(beta) - beta_opt)^2) 
+        }
+    
+    ix_alpha = which(err_alpha == min(err_alpha,na.rm = TRUE), arr.ind = TRUE)
+    ix_beta = which(err_beta == min(err_beta,na.rm = TRUE), arr.ind = TRUE)
+    
+    sigma_alpha_opt = sigma_alpha[ix_alpha[1]]
+    sigma_beta_opt = sigma_beta[ix_beta[1]]
+    
+    return(list(sigma_alpha_opt,sigma_beta_opt))
+    
+}
+
+sigmas = choose_sigmaAlpha_sigmaBeta(N, sigma_alpha, 
+                                     sigma_beta,alpha_opt, beta_opt)
+
+sigma_alpha_opt = sigmas[[1]]
+sigma_beta_opt = sigmas[[2]]
+
+sigma_alpha_opt
+sigma_beta_opt
+
+curve(dAlpha_normalized(x,sigma_alpha_opt),0,10)
+curve(dBeta_normalized(x,sigma_beta_opt),0,10)
+
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+# now we choose parameters a and b
+
+N = 1000
+a = seq(0.1,10,0.1)
+b = seq(0.1,10,0.1)
+
+choose_A_B = function(N,a,b, sigma_alpha_opt, sigma_beta_opt){
+
+    out = matrix(NA, nrow = length(a), ncol = length(b))
+    
+    for (i in 1:length(a)){
+        for (j in 1:length(b)){
+            
+            alpha = rAlpha(N,sigma_alpha_opt)
+            beta = rBeta(N,sigma_beta_opt)
+            gamma = rGamma(N)
+            s = min(length(alpha), length(beta), length(gamma))
+            
+            alpha = alpha[1:s]
+            beta  = beta[1:s]
+            gamma = gamma[1:s]
+        
+            m = mu(30, alpha, beta, gamma)
+            sample_mean = mean(m)
+            length_mean = length(m)
+            
+            sample_tau2 = rinvgamma(length_mean,a[i],b[j])
+            
+            sample_y = rnorm(length_mean, mean = m, sd = sqrt(sample_tau2))
+            #sd_sample = sd(sample_y)
+            
+            # penaly if the output is negative
+            out[i,j] = length((sample_y[sample_y < 0])*1)/length_mean + 
+                                        length((sample_y[sample_y > 4])*1)/length_mean
+        }
+    }
+    
+    return(out)
+}
+out = choose_A_B(N,a,b, sigma_alpha_opt,sigma_beta_opt)
+ix_out = which(out == min(out,na.rm = TRUE), arr.ind = TRUE)
+a_opt = a[ix_out[1,1]]
+b_opt = b[ix_out[1,2]]
+
+a_opt
+b_opt
+
+curve(dTau2(x,a_opt,b_opt),0,2)
+
+#--------------------------------------------------------------------------------------
+# final check
+
+N = 10000
+n_iter = 1000
+
+check = function(N,n_iterm,sigma_alpha_opt, sigma_beta_opt, a_opt, b_opt){
+    Y = rep(NA,N)
+    
+    for (n in 1:n_iter){
+        
+        alpha = rAlpha(N,sigma_alpha_opt)
+        beta = rBeta(N,sigma_beta_opt)
+        gamma = rGamma(N)
+        s = min(length(alpha), length(beta), length(gamma))
+        
+        alpha = alpha[1:s]
+        beta  = beta[1:s]
+        gamma = gamma[1:s]
+        
+        m = mu(mean(X), alpha, beta, gamma)
+        
+        length_mean = length(m)
+        
+        tau2 = rinvgamma(length_mean,a_opt,b_opt)
+        
+        if (length(m[ m < 0 || m > 4]*1) > 0){
+            
+            print(n)
+            print("length")
+            print(length(m[m < 0]*1)/length(m) + length(m[m > 4]*1)/length(m))
+        }
+        
+        y = rnorm(length_mean, mean = m, sd = 1/sqrt(tau2))
+        
+        Y[n] = mean(y)
+    }
+    hist(Y)
+    
+}
+check(N, n_iter, sigma_alpha_opt, sigma_beta_opt, a_opt, b_opt)
+
+
+```
+
+1d)  Compute \underline{numerically}  the maximum likelihood estimate for the vector of parameters of interest $(\alpha , \beta , \gamma , \tau^2)$ and compare it with the Maximum-a-Posterori estimate
+
+```{r, warning=FALSE}
+
+log_likelihood = function(X,Y,par){
+    
+    alpha = par[1]
+    beta  = par[2]
+    gamma = par[3]
+    tau2  = par[4]
+    
+    condition = ( (alpha > 1) * (beta > 1) * (gamma > 0) * (gamma < 1) * (tau2 > 0) )
+    
+    mu = (alpha - beta * gamma^X) * condition
+    
+    if (condition == TRUE){
+        res = sum(log1p(dnorm(Y,mean = mu, sd = sqrt(tau2))))
+    }
+    else{
+        res = 0
+    }
+    return (res)
+}
+#likelihood = Vectorize(likelihood_point)
+log_likelihood(X,Y,c(2,2,20,2))
+
+choose_mle_optimal = function(){
+    
+    res = matrix(NA, nrow = 100, ncol = 5)
+    
+    for (i in 1:100){
+        result = optim(par = c(i, i, i/100, i), 
+                   log_likelihood, X = X, Y = Y,
+                   control=list(fnscale=-1))
+        
+        res[i,1:4] = result$par
+        res[i,5] = result$value
+        
+}
+    mle_optimal = c(0,0,0,0)
+    
+    N = nrow(res)
+    values = res[,5]
+    for(j in 1:N){
+        
+        ix = which(values == max(values))
+        mle_optimal = res[ix,1:4]
+        
+        condition = ((mle_optimal[1] > 1) && (mle_optimal[2] > 1) && (mle_optimal[3] > 0) && 
+            (mle_optimal[3] < 1) && (mle_optimal[4] > 0))
+        
+        if (condition == TRUE){
+            return(res[ix,])
+            
+        }
+        else{
+            values[ix] = -1
+        }
+    }
+    values = res[,5]
+    ix = which(values == max(values))
+    return(res[ix,])
+}
+
+res = choose_mle_optimal()
+res
+
+mle_optimal = res[1:4]
+mle_optimal_value = res[5]
+
+mle_optimal
+mle_optimal_value
+
+
+mle_curve = mu_opt(X, mle_optimal[1], mle_optimal[2], mle_optimal[3])
+plot(X, Y, col = "blue", main = "mle for mu", xlim = c(0,40), ylim = c(1.8,3))
+lines(X, mle_curve, col = "red", type = "l", lwd = 2)
+#---------------------------------------------------------------
+##compute posterior
+require(cubature)
+
+prior = function(par,sigma_alpha_opt,sigma_beta_opt,a_opt,b_opt){
+    
+    alpha = par[1]
+    beta  = par[2]
+    gamma = par[3]
+    tau2  = par[4]
+    
+    condition = ( (alpha > 1) * (beta > 1) * (gamma > 0) * (gamma < 1) * (tau2 > 0) )
+    
+    if ( condition == TRUE ){
+        res = dAlpha_normalized(alpha,sigma_alpha_opt) * 
+            dBeta_normalized(beta, sigma_beta_opt) * 
+            dGamma(gamma) * dinvgamma(tau2,a_opt,b_opt)
+    }
+    else{
+        res = 0
+    }
+    return(res)
+}
+
+#prior(par,sigma_alpha_opt,sigma_beta_opt,a_opt,b_opt)
+
+log_posterior = function(par,sigma_alpha_opt,sigma_beta_opt,a_opt,b_opt,X,Y){
+    
+    res = log_likelihood(X,Y,par) + log1p(prior(par,sigma_alpha_opt,sigma_beta_opt,a_opt,b_opt))
+    if (res == 0){
+        return (res)
+    }
+    #den = adaptIntegrate(function(par) res,-Inf,+Inf)
+    
+    return(res)
+}
+#posterior(par,sigma_alpha_opt,sigma_beta_opt,a_opt,b_opt,X,Y)
+
+sigma_alpha_opt = 9
+sigma_beta_opt = 3
+a_opt = 6.6
+b_opt = 0.6
+
+
+# first model
+choose_posterior_parameters = function(){
+    
+    res = matrix(NA, nrow = 100, ncol = 5)
+    for (i in 1:100){
+        result = optim(par = c(i,i,i/100,i), 
+                   log_posterior, X = X, Y = Y, sigma_alpha_opt = sigma_alpha_opt,
+                   sigma_beta_opt = sigma_beta_opt, a_opt = a_opt, b_opt = b_opt,
+                   control=list(fnscale=-1))
+        
+        res[i,1:4] = result$par
+        res[i,5] = result$value
+        
+    }
+    values = res[,5]
+    ix = which(values == max(values))
+    
+    return(res[ix,])
+    
+}
+
+res = choose_posterior_parameters()
+posterior_optimal = res[1:4]
+posterior_optimal_value = res[5]
+
+posterior_optimal
+posterior_optimal_value
+
+posterior_curve = mu_opt(X, posterior_optimal[1], posterior_optimal[2], posterior_optimal[3])
+
+# plot
+plot(X, Y, col = "blue", main = "mle for mu", xlim = c(0,40), ylim = c(1.8,3))
+lines(X, mle_curve, col = "red", type = "l", lwd = 2)
+lines(X, posterior_curve, col = "orchid", type = "l", lwd = 2)
+
+
+mle_optimal
+posterior_optimal
+
+    
+```
+
+
+5)  Consider again the Bayesian model for Dugong's data (data available at <https://elearning2.uniroma1.it/mod/resource/view.php?id=147042>):
+
+5a)  Derive the functional form  (up to proportionality constants) of all *full-conditionals*
+
+In general, to compute the full conditionals up to a proportionality constant, we can compute the functional form of the posterior distribution for every parameter. In this case we know the likelihood and the priors, so we can easily retrieve the functional forms.
+For alpha
+$$
+\pi(\alpha|\beta,\gamma,\tau^2, x,y) \propto L(\alpha) \pi(\alpha) \\
+\\
+\mu_i = \alpha - \beta\gamma^{x_i}
+$$
+$$
+L(\alpha) \pi(\alpha) = \frac{1}{(2\pi\tau^2)^{n/2}} 
+\exp \left\{-\frac{1}{2}\frac{\sum_{i=1}^n(y_i -\mu_i)^2}{\tau^2} \right \} \, 
+* \, \frac{1}{\sqrt{2\pi\sigma_{\alpha}^2}} 
+\exp \left \{-\frac{1}{2}\frac{\alpha^2}{\sigma_{\alpha}^2} \right \}
+$$
+and considering all as a function of alpha we obtain
+$$
+\pi(\alpha|\beta,\gamma,\tau^2, x,y) \propto \exp \left \{ -\frac{1}{2} a_{\alpha} \alpha^2 + b_{\alpha} \alpha \right\} \\
+
+a_{\alpha} = \frac{1}{\sigma_{\alpha}^2} + \frac{n}{\tau^2}\\
+b_{\alpha} = \dfrac{\beta \sum_{i=1}^n \gamma^{x_i} + \sum_{i=1}^n y_i}{\tau^2}
+$$
+for beta (proceding in the exact same way)
+$$
+\pi(\beta|\alpha,\gamma,\tau^2, x,y) \propto L(\beta) \pi(\beta) \\ \propto \exp \left \{ -\frac{1}{2} a_{\beta} \beta^2 + b_{\beta} \beta \right\} \\
+
+a_{\beta} = \frac{1}{\sigma_{\beta}^2} + \frac{\sum_{i=1}^n \gamma^{2x_i}}{\tau^2}\\
+b_{\beta} = \dfrac{\alpha \sum_{i=1}^n \gamma^{x_i} - \sum_{i=1}^n y_i\gamma^{x_i}}{\tau^2}
+
+$$
+for tau2
+$$
+\pi(\tau^2|\alpha,\beta,\gamma, x,y) \propto L(\tau^2) \pi(\tau^2) 
+\propto \tau^{ 2(-a_{\tau^2}-1) }  \exp \left \{ -\frac{b_{\tau^2}}{\tau^2} \right \} \\
+
+a_{\tau^2} = a + \frac{n}{2}\\
+b_{\tau^2} = b + \frac{\sum_{i=1}^n (y_i - \mu_i)^2}{2}
+$$
+and finally for gamma
+$$
+\pi(\gamma|\alpha,\beta,\tau2, x,y) \propto L(\gamma) \pi(\gamma) 
+\propto \exp \left \{ -\frac{\beta}{\tau^2}\left[\sum_{i=1}^n \gamma^{2x_i} + 
+2\sum_{i=1}^n y_i \gamma^{x_i} - 2\alpha \sum_{i=1}^n \gamma^{x_i} \right]  \right \}
+$$
+
+```{r Alpha}
+
+### compute full-conditionals
+require(cubature)
+
+alpha = mle_optimal[1]
+beta = mle_optimal[2]
+gamma = mle_optimal[3]
+tau2 = mle_optimal[4]
+
+sigma_alpha_opt = 100
+
+mean(Y)
+# general likelihood
+
+# log-likelihood
+# log_likelihood = function(X, Y, alpha, beta, gamma, tau2){
+#     
+#     condition = ( (alpha > 1) * (beta > 1) * (gamma > 0) * (gamma < 1) * (tau2 > 0) )
+#     
+#     alpha_list = rep(alpha,length(X))
+#     
+#     if (condition == TRUE){
+#         
+#         mu = (alpha_list - beta * gamma^X)
+#         res = sum(log1p(dnorm(Y, mean = mu, sd = sqrt(tau2))))
+#     }
+#     else{
+#         res = 0
+#     }
+#     
+#     return (res)
+# }
+
+likelihood = function(X, Y, alpha, beta, gamma, tau2){
+    
+    condition = ( (alpha > 1) * (beta > 1) * (gamma > 0) * (gamma < 1) * (tau2 > 0) )
+    
+    alpha_list = rep(alpha,length(X))
+    
+    if (condition == TRUE){
+        
+        mu = (alpha_list - beta * gamma^X)
+        res = prod(dnorm(Y,mean = mu, sd = sqrt(tau2)))
+    }
+    else{
+        res = 0
+    }
+    
+    return (res)
+}
+
+## Alpha 
+likeAlpha = Vectorize(likelihood, vectorize.args = c("alpha"))
+
+#log_likeAlpha = Vectorize(log_likelihood, vectorize.args = c("alpha"))
+#log_likeAlpha(X,Y,0.4,beta,gamma,tau2)
+
+curve(likeAlpha(X, Y, x, beta, gamma, tau2),0,10)
+#curve(exp(log_likeAlpha(X, Y, x, beta, gamma, tau2))-1,0,10)
+
+# posterior Alpha
+proportional_postAlpha = function(X, Y, x, beta, gamma, tau2, sigma_alpha_opt){
+    
+    num = likeAlpha(X, Y, x, beta, gamma, tau2) * dAlpha_normalized(x,sigma_alpha_opt)
+    #log_num = log_likeAlpha(X, Y, x, beta, gamma, tau2) + 
+    #    log1p(dAlpha_normalized(x, sqrt(sigma_alpha_opt)))
+    #num = expm1(log_num)
+    return ( num )
+}
+postAlpha = function(X, Y, x, beta, gamma, tau2, sigma_alpha_opt){
+    
+    den = integrate(function(x) proportional_postAlpha(X, Y, x, beta, gamma, tau2, sigma_alpha_opt),
+                    lower = -Inf, upper = Inf)[[1]]
+    
+    return ( proportional_postAlpha(X, Y, x, beta, gamma, tau2, sigma_alpha_opt)/den )
+}
+
+curve(postAlpha(X,Y,x,beta,gamma,tau2,sigma_alpha_opt),0,10)
+integrate(function(x) postAlpha(X,Y, x, beta, gamma,tau2, sigma_alpha_opt), -Inf, Inf)
+
+# validation
+curve(dAlpha_normalized(x, sigma_alpha_opt)/max(dAlpha_normalized(x, sigma_alpha_opt)), 
+      xlim = c(0,20), xlab = "alpha", col = "blue", ylab = "Alpha", ylim = c(0,1))
+curve(likeAlpha(X, Y, x, beta, gamma, tau2)/max(likeAlpha(X, Y, x, beta, gamma, tau2)),
+      add = TRUE, col = "red")
+curve(postAlpha(X, Y, x, beta, gamma, tau2, sigma_alpha_opt)/max(postAlpha(X, Y, x, beta, gamma, tau2, sigma_alpha_opt)),add = TRUE)
+
+posterior_optimal
+mle_optimal
+
+postAlpha_analytic = function(X, Y, x, beta, gamma, tau2, sigma_alpha_opt){
+    
+    a_alpha = length(X)/tau2 + 1/sigma_alpha_opt
+    b_alpha = ( (beta * sum(gamma^X)) + sum(Y) )/(tau2)
+    
+    res = dnorm(x, mean = b_alpha/a_alpha, sd = sqrt(1/a_alpha)) * (x > 1)
+    return (res)
+}
+curve(postAlpha_analytic(X, Y, x, beta, gamma, tau2, sigma_alpha_opt),0,10)
+
+postAlpha_analytic_normalized = function(X, Y, x, beta, gamma, tau2, sigma_alpha_opt){
+    
+    den = integrate( function(x) postAlpha_analytic(X, Y, x, beta, gamma, tau2, sigma_alpha_opt), 
+    lower = -Inf, upper = +Inf )[[1]]
+    
+    return (postAlpha_analytic(X, Y, x, beta, gamma, tau2, sigma_alpha_opt)/den)
+    
+    
+}
+integrate(function(x) postAlpha_analytic_normalized(X,Y, x, beta, gamma,tau2, sigma_alpha_opt), -Inf, Inf)
+
+# check -----> correct
+curve(postAlpha_analytic_normalized(X, Y, x, beta, gamma, tau2, sigma_alpha_opt),0,10)
+curve(postAlpha(X, Y, x, beta, gamma, tau2, sigma_alpha_opt),add = TRUE, col = "blue",type = "o")
+
+```
+
+```{r Beta}
+
+## Beta
+sigma_beta_opt = 100
+likeBeta = Vectorize(likelihood, vectorize.args = c("beta"))
+
+curve(likeBeta(X, Y, alpha, x, gamma, tau2),0,100)
+
+# posterior Beta
+proportional_postBeta = function(X, Y, alpha, x, gamma, tau2, sigma_alpha_opt){
+    
+    num = likeBeta(X, Y, alpha, x, gamma, tau2) * dBeta_normalized(x,sigma_beta_opt)
+    return ( num )
+}
+postBeta = function(X, Y, alpha, x, gamma, tau2, sigma_beta_opt){
+    
+    den = integrate(function(x) proportional_postBeta(X, Y, alpha, x, gamma, tau2, sigma_beta_opt),
+                    lower = 0, upper = 10)[[1]]
+    
+    return ( proportional_postBeta(X, Y, alpha, x, gamma, tau2, sigma_beta_opt)/den )
+}
+
+curve(postBeta(X,Y,alpha,x,gamma,tau2,sigma_beta_opt),0,40)
+integrate(function(x) postBeta(X,Y, alpha, x, gamma,tau2, sigma_alpha_opt), 0, Inf)
+
+# validation
+curve(dBeta_normalized(x, sigma_beta_opt)/max(dBeta_normalized(x, sigma_beta_opt)), 
+      xlim = c(0,20), xlab = "beta", col = "blue", ylab = "Beta", ylim = c(0,1))
+curve(likeBeta(X, Y, alpha, x, gamma, tau2)/max(likeBeta(X, Y, alpha, x, gamma, tau2)),
+      add = TRUE, col = "red")
+curve(postBeta(X, Y, alpha, x, gamma, tau2, sigma_beta_opt)/max(postBeta(X, Y, alpha, x, gamma, tau2, sigma_beta_opt)),add = TRUE)
+
+
+postBeta_analytic = function(X, Y, alpha, x, gamma, tau2, sigma_beta_opt){
+    
+    a_beta = sum(gamma^(2*X))/tau2 + 1/sigma_beta_opt
+    b_beta = ( (alpha * sum(gamma^X)) - sum(Y * gamma^X) )/(tau2)
+    
+    res = dnorm(x, mean = b_beta/a_beta, sd = sqrt(1/a_beta)) * (x > 1)
+    return (res)
+}
+
+postBeta_analytic_normalized = function(X, Y, alpha, x, gamma, tau2, sigma_beta_opt){
+    
+    den = integrate( function(x) postBeta_analytic(X, Y, alpha, x, gamma, tau2, sigma_beta_opt), 
+    lower = -Inf, upper = +Inf )[[1]]
+    
+    return (postBeta_analytic(X, Y, alpha, x, gamma, tau2, sigma_beta_opt)/den)
+    
+    
+}
+integrate(function(x) postBeta_analytic_normalized(X,Y, alpha, x, gamma,tau2, sigma_beta_opt), -Inf, Inf)
+
+
+curve(postBeta_analytic_normalized(X, Y, alpha, x, gamma, tau2, sigma_beta_opt), 0, 20)
+curve(postBeta(X, Y, alpha, x, gamma, tau2, sigma_beta_opt), col = "blue", add = TRUE, type = "o")
+
+```
+
+```{r Gamma}
+
+# in this case it is not possible recognize a functional useful form
+
+likeGamma = Vectorize(likelihood, vectorize.args = c("gamma"))
+curve(likeGamma(X, Y, alpha, beta, x, tau2),0,1)
+
+proportional_postGamma = function(X, Y, alpha, beta, x, tau2){
+    
+    num = likeGamma(X, Y, alpha, beta, x, tau2) * dGamma(x)
+    return ( num )
+}
+postGamma = function(X, Y, alpha, beta, x, tau2){
+    
+    den = integrate(function(x) proportional_postGamma(X, Y, alpha, beta, x, tau2),
+                    lower = 0, upper = 1)[[1]]
+    
+    return ( proportional_postGamma(X, Y, alpha, beta, x, tau2)/den )
+}
+
+curve(postGamma(X,Y,alpha,beta,x,tau2),0,1)
+integrate(function(x) postGamma(X,Y, alpha, beta, x,tau2), 0, 1)
+
+
+curve(dGamma(x),xlim = c(0,1), xlab = "gamma", col = "blue", ylab = "Gamma", ylim = c(0,1))
+curve(likeGamma(X, Y, alpha, beta, x, tau2)/max(likeGamma(X, Y, alpha, beta, x, tau2)), add = TRUE, col = "red")
+curve(postGamma(X,Y,alpha,beta,x,tau2)/max(postGamma(X,Y,alpha,beta,x,tau2)),add = TRUE)
+
+
+```
+
+```{r Tau2}
+a_opt = 6.6
+b_opt = 0.6
+
+likeTau2 = Vectorize(likelihood, vectorize.args = c("tau2"))
+curve(likeTau2(X, Y, alpha, beta, gamma, x),0,100)
+
+proportional_postTau2 = function(X, Y, alpha, beta, gamma, x, a_opt, b_opt){
+    
+    num = likeTau2(X, Y, alpha, beta, gamma, x) * dTau2(x, a_opt, b_opt)
+    return ( num )
+}
+postTau2 = function(X, Y, alpha, beta, gamma, x, a_opt, b_opt){
+    
+    den = integrate(function(x) proportional_postTau2(X, Y, alpha, beta, gamma, x, a_opt, b_opt),
+                    lower = 0, upper = 100)[[1]]
+    
+    return ( proportional_postTau2(X, Y, alpha, beta, gamma, x, a_opt, b_opt)/den )
+}
+
+curve(postTau2(X,Y,alpha,beta,gamma,x,a_opt,b_opt),0,100)
+integrate(function(x) postTau2(X,Y, alpha, beta, gamma,x, a_opt, b_opt), 0, Inf)
+
+curve(dTau2(x, a_opt,b_opt))
+# validation
+curve(dTau2(x, a_opt,b_opt)/10, 
+      xlim = c(0,10),ylim = c(0,1), xlab = "tau2", col = "blue", ylab = "Tau2")
+curve(likeTau2(X, Y, alpha, beta, gamma, x)/max(likeTau2(X, Y, alpha, beta, gamma, seq(1,100,1))),
+      add = TRUE, col = "red")
+curve(postTau2(X, Y, alpha, alpha, gamma, x, a_opt, b_opt)/max(postTau2(X, Y, alpha, beta, gamma, seq(1,100,1), a_opt, b_opt)),add = TRUE)
+
+
+postTau2_analytic = function(X, Y, alpha, beta, gamma, x, a_opt, b_opt){
+    
+    mu = rep(alpha,length(X)) - beta * gamma^X
+    
+    a_tau2 = length(X)/2 + a_opt
+    b_tau2 = b_opt + (sum((Y-mu)^2))/2
+    
+    res = dinvgamma(x, a_tau2, b_tau2) * (x > 0)
+    return (res)
+}
+
+postTau2_analytic_normalized = function(X, Y, alpha, beta, gamma, x, a_opt, b_opt){
+    
+    den = integrate( function(x) postTau2_analytic(X, Y, alpha, beta, gamma, x, a_opt, b_opt), 
+    lower = 0, upper = 100 )[[1]]
+    
+    return (postTau2_analytic(X, Y, alpha, beta, gamma, x, a_opt, b_opt)/den)
+    
+    
+}
+integrate(function(x) postTau2_analytic_normalized(X,Y, alpha, beta, gamma,x, a_opt, b_opt), 0, Inf)
+
+
+curve(postTau2_analytic_normalized(X, Y, alpha, beta, gamma, x, a_opt, b_opt), 0, 100)
+curve(postTau2(X, Y, alpha, beta, gamma, x, a_opt, b_opt), col = "blue", add = TRUE, type = "o")
+
+
+
+```
+
+5b)  Which distribution can you recognize within standard parametric
+  families
+so that direct simulation from full conditional can be easily implemented ?
+
+For alpha, beta and tau2 it is easy to recognize a conjugate model and retrieve the full conditional from the functional form; infact for alpha and beta we have a normal-normal model, and for tau2 we have a normal-inversgamma model; so the posteriors are known and in particular they are:
+$$
+\alpha_{post} \sim N(\frac{b_\alpha}{a_{\alpha}}, \frac{1}{a_{\alpha}}) \\
+a_{\alpha} = \frac{1}{\sigma_{\alpha}^2} + \frac{n}{\tau^2}\\
+b_{\alpha} = \dfrac{\beta \sum_{i=1}^n \gamma^{x_i} + \sum_{i=1}^n y_i}{\tau^2}
+$$
+$$
+\beta_{post} \sim N(\frac{b_\beta}{a_{\beta}}, \frac{1}{a_{\beta}}) \\
+a_{\beta} = \frac{1}{\sigma_{\beta}^2} + \frac{\sum_{i=1}^n \gamma^{2x_i}}{\tau^2}\\
+b_{\beta} = \dfrac{\alpha \sum_{i=1}^n \gamma^{x_i} - \sum_{i=1}^n y_i\gamma^{x_i}}{\tau^2}
+$$
+$$
+\tau_{post}^2 \sim Invgamma(a_{\tau^2},b_{\tau^2})
+a_{\tau^2} = a + \frac{n}{2}\\
+b_{\tau^2} = b + \frac{\sum_{i=1}^n (y_i - \mu_i)^2}{2}
+$$
+for gamma we cannot recognize a standard model and we know only the functional form
+$$
+\gamma_{post} \propto \exp \left \{ -\frac{\beta}{\tau^2}\left[\sum_{i=1}^n \gamma^{2x_i} + 
+2\sum_{i=1}^n y_i \gamma^{x_i} - 2\alpha \sum_{i=1}^n \gamma^{x_i} \right]  \right \}
+$$
+
+5c)  Using a suitable Metropolis-within-Gibbs algorithm simulate a Markov chain 
+($T=10000$) to approximate the posterior distribution for the above model
+
+```{r}
+## Gibbs sampling for the conjugate full conditionals -----> MH for the normal-beta(uniform) model
+
+## sampling from the full-conditionals we obtain a sample from the posterior joint for the paramters
+# alpha beta gamma tau2
+
+## can I use an indipendent proposals?????????
+
+T = 10000
+
+posterior_joint = data.frame( matrix(NA, nrow = T+1, ncol = 4) )
+
+
+alpha = mle_optimal[1]
+beta = mle_optimal[2]
+gamma = mle_optimal[3]
+tau2 = mle_optimal[4]
+# initialization
+posterior_joint[1,]
+posterior_joint[1,] = c(alpha,beta,gamma,tau2)
+names(posterior_joint) =  c("alpha", "beta", "gamma", "tau2")
+
+posterior_joint$alpha
+
+functional_form = function(gamma, X, Y, alpha, beta, tau2){
+    
+    res = exp( -(beta/tau2) * ( sum(gamma^(2*X)) + 2 * sum(Y*gamma^(X)) - 2 * alpha *
+                                    sum(gamma^(X)) ) )
+    return (res)
+}
+f = Vectorize(functional_form, vectorize.args = c("gamma"))
+
+alpha
+mle_optimal
+curve(f(x, X, Y, alpha, beta, tau2),0,1)
+
+sigma_alpha_opt
+sigma_beta_opt
+a_opt
+b_opt
+
+require(truncnorm)
+
+# Metropolis-Hastings within Gibbs-Sampling
+
+MH_GB_sampling_main = function(posterior_joint, X, Y, lower, upper){
+
+    for (t in 1:T){
+        
+        ##############################################################################################################
+        # a_alpha
+        a_alpha = length(X)/posterior_joint$tau2[t] + 1/sigma_alpha_opt
+        # b_alpha
+        b_alpha = ( (posterior_joint$beta[t] * sum(posterior_joint$gamma[t]^X)) + sum(Y) ) / ( posterior_joint$tau2[t] )
+        # alpha (t+1)
+        posterior_joint$alpha[t+1] = rtruncnorm( 1, mean = b_alpha/a_alpha, sd = sqrt(1/a_alpha), a = 1, b = Inf )
+        
+        ##############################################################################################################
+        # a_beta
+        a_beta = sum( posterior_joint$gamma[t]^(2*X) ) / posterior_joint$tau2[t] + 1/sigma_beta_opt
+        # b_beta
+        b_beta = ( ( posterior_joint$alpha[t+1] * sum(posterior_joint$gamma[t]^X) ) 
+                   - sum(Y * posterior_joint$gamma[t]^X) ) / (posterior_joint$tau2[t])
+        # beta (t+1)
+        posterior_joint$beta[t+1] = rtruncnorm(1, mean = b_beta/a_beta, sd = sqrt(1/a_beta),a = 1,b = Inf)
+        
+        ##################################################################################
+        # tau2
+        
+        mu = posterior_joint$alpha[t+1] - 
+            posterior_joint$beta[t+1] * posterior_joint$gamma[t]^X
+        
+        a_tau2 = a_opt + length(X)/2
+        b_tau2 = b_opt + ( sum((Y-mu)^2 )) /2
+        
+        posterior_joint$tau2[t+1] = rinvgamma(1, a_tau2, b_tau2)
+        
+        
+        ###############################################################################
+        # gamma MH ####################################################################
+        
+        actual = posterior_joint$gamma[t]
+        proposal = runif(n = 1, min = lower, max = upper)
+        
+        alpha_t = posterior_joint$alpha[t+1]
+        beta_t = posterior_joint$beta[t+1]
+        tau2_t = posterior_joint$tau2[t+1]
+        
+        p_gamma_actual = functional_form(actual, X, Y, alpha_t, beta_t, tau2_t)
+        p_gamma_proposal = functional_form(proposal, X, Y, alpha_t, beta_t, tau2_t)
+        
+        P = p_gamma_proposal/p_gamma_actual #* dunif(actual)/dunif(proposal)
+        
+        P[is.na(P)] = 1
+        
+        a_xy = min(P,1)
+        
+        bern = rbinom(n = 1, size =  1, a_xy)
+        
+        #print(a_xy)
+        
+        # gamma (t+1)
+        if ( bern == 1 && proposal > 0 && proposal < 1 ){
+            posterior_joint$gamma[t+1] = proposal
+        }
+        else{
+            posterior_joint$gamma[t+1] = actual
+        }
+            
+    }
+    
+    return (posterior_joint)
+}
+
+posterior_joint = MH_GB_sampling_main(posterior_joint, X, Y, 0,1)
+
+#################################################################################
+
+par(mfrow=c(2,2))
+
+#curve(postAlpha(X, Y, x, beta, gamma, tau2, sigma_alpha_opt), col = "blue",0,10)
+hist(posterior_joint$alpha[5000:T], breaks = 40, freq = FALSE, col = "orchid", border = FALSE)
+#abline(v = posterior_optimal[1])
+#curve(postBeta(X, Y, alpha, x, gamma, tau2, sigma_beta_opt), col = "blue",0,100)
+hist(posterior_joint$beta[5000:T], breaks = 40, freq = FALSE, col = "yellow", border = FALSE)
+#abline(v = posterior_optimal[2])
+#curve(postGamma(X,Y,alpha,beta,x,tau2))
+hist(posterior_joint$gamma[5000:T],xlim = c(0,1), 
+     freq = FALSE, col = "darkgreen", border = FALSE)
+#abline(v = posterior_optimal[3])
+#curve(postTau2(X,Y,alpha,beta,gamma,x, a_opt, b_opt),0,100)
+hist(posterior_joint$tau2[5000:T], breaks = 40, freq = FALSE,col = "blue", border = FALSE)
+#abline(v = posterior_optimal[4])
+
+mle_optimal
+mu_prior = mu_opt(X, mle_optimal[1], mle_optimal[2], mle_optimal[3])
+
+posterior_optimal
+mu_post_opt = mu_opt(X, posterior_optimal[1], posterior_optimal[2], posterior_optimal[3])
+
+mean(posterior_joint$alpha)
+mean(posterior_joint$beta)
+mean(posterior_joint$gamma)
+mu_post_mean = mu_opt(X, mean(posterior_joint$alpha), mean(posterior_joint$beta), mean(posterior_joint$gamma))
+
+mu_post_median = mu_opt(X, median(posterior_joint$alpha), median(posterior_joint$beta), median(posterior_joint$gamma))
+
+
+getmode(posterior_joint$alpha)
+getmode(posterior_joint$beta)
+getmode(posterior_joint$gamma)
+mu_post_mode = mu_opt(X, getmode(posterior_joint$alpha), getmode(posterior_joint$beta), getmode(posterior_joint$gamma))
+
+#####################################################################################
+par(mfrow=c(1,1))
+plot(X,Y,ylim = c(1.8,3.0), col = "black", lwd = 2)
+grid()
+title("comparison mu estimations")
+lines(X,mu_prior, col = "red", lwd = 2)
+lines(X,mu_post_opt, col = "blue", lwd = 2)
+lines(X,mu_post_mean, col = "darkgreen", lwd = 2)
+lines(X,mu_post_median, col = "darkorchid", lwd = 2)
+lines(X,mu_post_mode, col = "brown", lwd = 2)
+legend('topleft', c("mu_prior", "mu_post_opt", "mu_post_mean", "mu_post_median", "mu_post_mode") , 
+   lty=1, col=c('red', 'blue', 'darkgreen',' darkorchid', "brown"),  cex=.75)
+
+####################################################################################
+
+par(mfrow=c(2,2))
+plot(posterior_joint$alpha,type = "l", col = "black", ylim = c(1,5))
+grid()
+abline(h = mean(posterior_joint$alpha), col = "blue", lwd = 3)
+plot(posterior_joint$beta,type = "l", col = "black", ylim = c(1,5))
+grid()
+abline(h = mean(posterior_joint$beta), col = "blue", lwd = 3)
+plot(posterior_joint$gamma,type = "l", col = "black", ylim = c(0,1))
+grid()
+abline(h = mean(posterior_joint$gamma), col = "blue", lwd = 3)
+plot(posterior_joint$tau2,type = "l", col = "black", ylim = c(0,0.2))
+grid()
+abline(h = mean(posterior_joint$tau2), col = "blue", lwd = 3)
+
+####################################################################################
+getmode <- function(v) {
+   uniqv <- unique(v)
+   uniqv[which.max(tabulate(match(v, uniqv)))]
+}
+
+# alpha
+par(mfrow=c(3,1))
+hist(posterior_joint$alpha[5000:T], breaks = 40, freq = FALSE, col = "orchid", border = FALSE)
+plot(posterior_joint$alpha, type = "l", col = "red", ylim = c(1,10))
+grid()
+abline(h = mean(posterior_joint$alpha), col = "blue", lwd = 1)
+acf(posterior_joint$alpha, lag.max = 200)
+
+# beta
+hist(posterior_joint$beta[5000:T], breaks = 40, freq = FALSE, col = "yellow", border = FALSE)
+plot(posterior_joint$beta, type = "l", col = "red", ylim = c(1,10))
+grid()
+abline(h = mean(posterior_joint$beta), col = "blue", lwd = 1)
+acf(posterior_joint$beta, lag.max = 200)
+
+# gamma
+hist(posterior_joint$gamma[5000:T],xlim = c(0,1), 
+     freq = FALSE, col = "darkgreen", border = FALSE)
+plot(posterior_joint$gamma, type = "l", col = "red", ylim = c(0,1))
+abline(h = mean(posterior_joint$gamma), col = "blue", lwd = 1)
+grid()
+acf(posterior_joint$gamma, lag.max = 200)
+
+# tau2
+hist(posterior_joint$tau2[5000:T], breaks = 40, freq = FALSE,col = "blue", border = FALSE)
+plot(posterior_joint$tau2, type = "l", col = "red", ylim = c(0,10))
+abline(h = mean(posterior_joint$tau2), col = "blue", lwd = 1)
+grid()
+acf(posterior_joint$tau2, lag.max = 200)
+
+######################################################################################à
+par(mfrow=c(2,2))
+acf(posterior_joint$alpha, lag.max = 200)
+grid()
+acf(posterior_joint$beta, lag.max = 200)
+grid()
+acf(posterior_joint$gamma, lag.max = 200)
+grid()
+acf(posterior_joint$tau2, lag.max = 200)
+grid()
+```
+
+5d)  Show the 4 univariate trace-plots of the simulations of each parameter
+
+```{r}
+
+par(mfrow=c(2,2))
+plot(posterior_joint$alpha,type = "l", col = "black", ylim = c(1,5))
+grid()
+abline(h = mean(posterior_joint$alpha), col = "blue", lwd = 3)
+plot(posterior_joint$beta,type = "l", col = "black", ylim = c(1,5))
+grid()
+abline(h = mean(posterior_joint$beta), col = "blue", lwd = 3)
+plot(posterior_joint$gamma,type = "l", col = "black", ylim = c(0,1))
+grid()
+abline(h = mean(posterior_joint$gamma), col = "blue", lwd = 3)
+plot(posterior_joint$tau2,type = "l", col = "black", ylim = c(0,0.2))
+grid()
+abline(h = mean(posterior_joint$tau2), col = "blue", lwd = 3)
+
+
+```
+
+5e)  Evaluate graphically the behaviour of the empirical averages 
+$\hat{I}_t$  with growing $t=1,...,T$
+
+```{r}
+
+running_means = data.frame(matrix(NA, nrow = T+1, ncol = 4))
+names(running_means) =  c("alpha", "beta", "gamma", "tau2")
+
+for ( t in 1:(T+1) ){
+    
+    running_means[t,] = colMeans(posterior_joint[1:t,])
+}
+
+
+par(mfrow=c(2,2))
+plot(running_means$alpha,type = "l",col = "red")
+grid()
+plot(running_means$beta,type = "l",col = "red")
+grid()
+plot(running_means$gamma,type = "l",col = "red")
+grid()
+plot(running_means$tau2,type = "l",col = "red")
+grid()
+
+
+
+```
+
+5f)  Provide estimates for each parameter together with the
+  approximation error and explain how you have evaluated such error
+
+```{r}
+########################################################################################
+par(mfrow=c(2,2))
+t = 1000
+for ( n in seq(1,4000,t)){
+plot(density(posterior_joint$alpha[ n : (n + t) ]), main = n, col = "green",
+     xlim = c(2.5,3.5),ylim = c(0,3.0))
+abline(v = mean(posterior_joint$alpha[ n : (n + t) ]))
+}
+
+par(mfrow=c(2,2))
+for ( n in seq(4000,7500,t)){
+plot(density(posterior_joint$alpha[ n : (n + t) ]), main = n, col = "green",
+     xlim = c(2.5,3.5), ylim = c(0,3.0) )
+abline(v = mean(posterior_joint$alpha[ n : (n + t) ]))
+}
+
+par(mfrow=c(2,2))
+for ( n in seq(8000,(T-t),t)){
+plot(density(posterior_joint$alpha[ n : (n + t) ]), main = n, col = "green", 
+     xlim = c(2.5,3.5),ylim = c(0,3.0))
+abline(v = mean(posterior_joint$alpha[ n : (n + t) ]))
+}
+
+plot(density(posterior_joint$alpha[ 1 : t ]), main = 1, col = "green", 
+     xlim = c(2.5,3.5),ylim = c(0,3.0))
+plot(density(posterior_joint$alpha[ (T-t) : T ]), main = n, col = "green", 
+     xlim = c(2.5,3.5),ylim = c(0,3.0))
+
+#########################################################################################
+
+# how to evaluate the approximation error????
+
+#chain_cov = as.vector(acf(posterior_joint$alpha,plot = FALSE, lag.max = T, type = "covariance"))[[1]]
+
+#chain_cov[10]
+#cov(posterior_joint$alpha[1:(length(posterior_joint$alpha)-9)],
+#    posterior_joint$alpha[10:length(posterior_joint$alpha)])
+
+# not consistent
+#chain_standard_error_naive = sqrt((var(posterior_joint$alpha) + 2*sum(chain_cov))/T)
+#chain_standard_error_naive
+
+# par(mfrow=c(1,1))
+# plot(posterior_joint$alpha, col = "black",type = "l", ylim = c(2.8,3.2))
+# grid()
+# abline(h = mean(posterior_joint$alpha), col = "red", lwd = 1)
+# abline(h = (mean(posterior_joint$alpha) + 3*chain_standard_error_naive), col = "blue", lwd = 1)
+# abline(h = (mean(posterior_joint$alpha) - 3*chain_standard_error_naive), col = "blue", lwd = 1)
+
+##############################################################################################
+# batch means
+# 
+
+batch_mean = function(post, batch_size, T){
+
+    B = T/batch_size
+    global_markov_chain_mean = mean(post)
+    batch_markov_chain_means = rep(NA, B) 
+    
+    for (b in 1:B) {
+        
+        batch_markov_chain_means[b] = mean(post[((b-1)*batch_size):(b*batch_size)])
+        
+    }
+    
+    k = ( B * ( 1/( (batch_size) - 1 ) ) )
+    
+    tau2_estimator = k * sum((batch_markov_chain_means - global_markov_chain_mean)^2)
+    
+    
+    upper = global_markov_chain_mean + 3 * sqrt(tau2_estimator/T)
+    lower = global_markov_chain_mean - 3 * sqrt(tau2_estimator/T)
+    
+    CI_MCMC_batch_mean = c(lower, global_markov_chain_mean, upper)
+    
+    return(list(CI_MCMC_batch_mean, sqrt(tau2_estimator/T)))
+}
+
+
+batch_size = 100
+out = batch_mean(posterior_joint$alpha, batch_size, T)
+CI_alpha = out[[1]]
+standard_error_alpha = out[[2]]
+CI_alpha
+
+out = batch_mean(posterior_joint$beta, batch_size, T)
+CI_beta = out[[1]]
+standard_error_beta = out[[2]]
+CI_beta
+
+out = batch_mean(posterior_joint$gamma, batch_size, T)
+CI_gamma = out[[1]]
+standard_error_gamma = out[[2]]
+CI_gamma
+
+out = batch_mean(posterior_joint$tau2, batch_size, T)
+CI_tau2 = out[[1]]
+standard_error_tau2 = out[[2]]
+CI_tau2
+
+#########################################################################################
+## use sub-sampling and batch means
+
+sub_sampling = function(post, jump_size, T){
+    
+    markov_chain_mean = mean(post)
+    
+    B = T/jump_size
+    
+    means_matrix = matrix(post, nrow = B, ncol = jump_size)
+    
+    upper = markov_chain_mean + 3 * sd(colMeans(means_matrix))
+    lower = markov_chain_mean - 3 * sd(colMeans(means_matrix))
+    
+    CI_subsampling = c(lower, markov_chain_mean, upper)
+    
+    return (CI_subsampling)
+}
+
+
+jump_size = 10
+sub_sampling(posterior_joint$alpha[-1], jump_size, T)
+
+sub_sampling(posterior_joint$beta[-1], jump_size, T)
+
+sub_sampling(posterior_joint$gamma[-1], jump_size, T)
+
+sub_sampling(posterior_joint$tau2[-1], jump_size, T)
+
+```
+
+5g)  Which parameter has the largest posterior uncertainty? How did
+  you measure it?
+
+```{r}
+
+(standard_error_alpha/mean(posterior_joint$alpha))*100
+
+(standard_error_beta/mean(posterior_joint$beta))*100
+
+(standard_error_gamma/mean(posterior_joint$gamma))*100
+
+(standard_error_tau2/mean(posterior_joint$tau2))*100
+
+```
+
+
+
+
+5h)  Which couple of parameters has the largest correlation (in
+  absolute value)?
+
+```{r}
+
+# alpha and gamma have the highest correlation
+abs(cor(posterior_joint))
+
+
+
+```
+
+
+
+5i)  Use the Markov chain to approximate the posterior predictive 
+distribution of the length
+  of a dugong with age of 20 years.
+  
+5j)  Provide the prediction of another  dugong with age 30 
+
+```{r}
+##############################################################################
+
+# I use a MCMC estimate considering only sample points from the invariant distro
+# so I can estimate the integral more or less as a vanilla MC remembering that the 
+# error on the estimator increases respect the MC case (where we have only the MSE) 
+# with the correlations ( important remember ).
+
+burn_in = 2000
+prediction = function(x_obs, posterior_joint, burn_in){
+    
+    n = T - burn_in
+    alpha_post = posterior_joint$alpha[2000:T]
+    beta_post = posterior_joint$beta[2000:T]
+    gamma_post = posterior_joint$gamma[2000:T]
+    tau2_post = posterior_joint$tau2[2000:T]
+    
+    mu_post = mu_opt(x_obs,alpha_post, beta_post, gamma_post)
+    
+    f_like_post = rnorm(n = n, mean = mu_post, sd = sqrt(tau2_post))
+    
+    y_pred = f_like_post
+    
+    return (y_pred)
+}
+
+y_obs20 = prediction(20, posterior_joint, burn_in)
+y_obs30 = prediction(30, posterior_joint, burn_in)
+
+par(mfrow=c(1,1))
+plot(X,Y, col = "blue", lwd = 2, ylim = c(1.8,3.0),main = "predictions")
+grid()
+points(20,mean(y_obs20),col = "red", lwd = 5)
+points(30,mean(y_obs30),col = "green", lwd = 5)
+legend('topleft', c("prediction x_obs = 20", "prediction x_obs = 30"), 
+   lty=1, col=c('red', 'green'),  cex=.75)
+
+
+hist(y_obs20, col = "darkgreen", border = FALSE, freq = FALSE)
+hist(y_obs30, col = "darkred", border = FALSE, freq = FALSE)
+
+```
+
+
+
+5k)  Which prediction is less precise?
+
+```{r}
+
+y_obs20
+out = batch_mean(y_obs20, batch_size, length(y_obs20))
+CI_obs20 = out[[1]]
+standard_error_obs20 = out[[2]]
+CI_obs20
+standard_error_obs20
+
+(standard_error_obs20/mean(y_obs20))*100
+
+
+out = batch_mean(y_obs30, batch_size, length(y_obs30))
+CI_obs30 = out[[1]]
+standard_error_obs30 = out[[2]]
+CI_obs30
+standard_error_obs30
+
+(standard_error_obs30/mean(y_obs30))*100
+
+```
+
+
+* * *
+<div class="footer"> &copy; 2016-2017 - Stat4DS2+CS - Luca Tardella </div>
+
+
+
+
+```{r, warning=FALSE, error=FALSE, message=FALSE, echo=FALSE}
+cat(paste0("This homework will be graded and it will be part of your final evaluation \n\n "))
+cat(paste("Last update by LT:",date()))
+```
+
+

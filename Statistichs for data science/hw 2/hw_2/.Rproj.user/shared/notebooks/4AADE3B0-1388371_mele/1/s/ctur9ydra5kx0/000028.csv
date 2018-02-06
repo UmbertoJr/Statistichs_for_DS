@@ -1,0 +1,2 @@
+"0","legend(20,2, c(""optim MLE"",""optim MPO"",""first MLE"",""first MPO""), lty = c(1,1,1,1),"
+"0","       lwd = c(2.5,2.5,2.5,2.5), col = c('black',""red"",""violet"",""green""))"

@@ -1,0 +1,2 @@
+"0","pr <- function(thet) dnorm(thet, 0, (-5/qnorm(0.02)))"
+"0","curve(pr, ylab = 'prior', xlab=expression(theta), from = -10, to = 10)"

@@ -1,0 +1,3 @@
+"0","curve(posterior, col = 'blue', add = T)
+"
+"2","'add' will be ignored as there is no existing plot"

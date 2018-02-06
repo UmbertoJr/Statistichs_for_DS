@@ -1,0 +1,7 @@
+"0","library(markovchain)"
+"0","states <- c('1','2','3')"
+"0","ByRow <- TRUE"
+"0","transition_matrix <- matrix(data= c(0,1/2,1/2,"
+"0","                                    5/8,1/8,1/4,"
+"0","                                    2/3,1/3,0), byrow = ByRow,nrow=3)"
+"0","Mc_states <- new('markovchain', states = states, byrow = ByRow, transitionMatrix = transition_matrix, name='Position')"

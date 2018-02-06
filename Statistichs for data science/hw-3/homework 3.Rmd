@@ -1,0 +1,183 @@
+---
+title: <span style="color:blue"> "Homework 3" </span>
+author: "Ballesteros, Mele"
+output: html_document
+---
+
+&nbsp;
+&nbsp;
+
+<center> <h3> <span style="color:blue"> Exercise I: </span> Generate samples from a DAG </h3> </center> 
+
+Consider the following (Bayesian) model in DAG format
+
+<center> <img src="C:\Users\Umbertojunior\Pictures\Screenshots\DAG.png" width="200" height="40" alt="Computer Hope" /> </center>
+
+where, conditionally on $\mu= [\mu_1, \mu_2]$ and $\sigma^2$, we assume that:
+<ul> 
+<li> $X = [X_1,X_2]^T \sim N_2(\mu,\sigma^2 I_2)$ </li>
+<li> $Y = [Y_1,Y_2]^T \sim N_2(\mu,\sigma^2 I_2)$ </li>
+</ul> 
+
+
+<b><span style="color:blue"> 1)</span></b>  
+The joint distribution corrinsponding to this DAG is:
+$$P(\mu,\sigma^2,X_1,X_2,Y_1,Y_2)=P(\mu)\cdot P(\sigma^2)\cdot P(X_1|\mu,\sigma^2) \cdot P(X_2 |X_1,\mu,\sigma^2)\\
+\cdot P(Y_2|\mu,\sigma^2) \cdot P(Y_1 |Y_2,\mu,\sigma^2)$$
+
+where :
+
+<ul> 
+<li>$P(X_1|\mu,\sigma^2)$ is a marginal distribution of $X$ and so is a Gaussian with parameters $\mu_1$ and $\sigma$</li>
+<li>$P(Y_2|\mu,\sigma^2)$ is a marginal distribution of $Y$ and so is a Gaussian with parameters $\mu_2$ and $\sigma$</li>
+<li>$P(X_2 |X_1,\mu,\sigma^2)$ is a conditional distribution of $X$ and so is a Gaussian with parameters $\mu_{2|1}$ and $\Sigma_{2|1}$</li>
+<li>$P(Y_1 |Y_2,\mu,\sigma^2)$ is a conditional distribution of $Y$ and so is a Gaussian with parameters $\mu_{1|2}$ and $\Sigma_{1|2}$</li>
+</ul>
+
+Considering  that:
+$$\mu_{1|2}=\mu_1 + \Sigma_{12}\Sigma_{22}^{-1}(x_2-\mu_2)$$ 
+$$\Sigma_{1|2}= \Lambda_{11}^{-1}= \Sigma_{11} -\Sigma_{12}\Sigma_{22}^{-1}\Sigma_{21}$$ 
+
+And since that $\Sigma_{12}$ and $\Sigma_{21}$ in our case are equal to $0$:
+<ul>
+<li>$\mu_{2|1}=\mu_2$</li>
+<li>$\Sigma_{2|1}=\Sigma_{22}=\sigma$</li>
+<li>$\mu_{1|2}=\mu_1$</li>
+<li>$\Sigma_{1|2}=\Sigma_{11}=\sigma$</li>
+</ul>
+
+
+Therefore:
+$$P(DAG)=P(\mu)\cdot P(\sigma)\cdot N_{x_1}(\mu_1,\sigma)\cdot N_{x_2}(\mu_2,\sigma)\cdot N_{y_1}(\mu_1,\sigma)\cdot N_{y_ 2}(\mu_2,\sigma)$$
+
+and if $\mu$ and $\sigma$ distributions are Normal we get approximately a 7 dimensionality Multivariate Normal Distribution.
+
+
+<b><span style="color:blue"> 2)</span></b>  
+Choosing a bivariate normal distribution for $\mu$ and a univariate normal distribution for $\sigma$, we can simulate a sample of n=10000 random vectors from the joint distribution, in this way: 
+
+
+```{r, eval=FALSE}
+library(mnormt)
+
+# Simulation size
+n= 1e4
+
+# This (M x 7) matrix will store the samples from the joint
+sim.samp <- matrix(NA, nrow = M, ncol = 8)
+colnames(sim.samp) <- c("sigma1","sigma2","tetha","x1","x2","y1","y2", "DAG")
+
+#Main loop
+varcov<- matrix(c(1,0,0,1),2,2)
+for (i in 1:n){
+  sim.samp[i,1:2]<- rmnorm(1,c(2,7), varcov)
+  sim.samp[i,3]<- abs(rnorm(1))
+  sim.samp[i,4] <- rnorm(1, mean = sim.samp[i,1], sd = sim.samp[i,3])
+  sim.samp[i,5] <- rnorm(1, mean = sim.samp[i,2], sd = sim.samp[i,3])
+  sim.samp[i,6] <- rnorm(1, mean = sim.samp[i,1], sd = sim.samp[i,3])
+  sim.samp[i,7] <- rnorm(1, mean = sim.samp[i,2], sd = sim.samp[i,3])
+  sim.samp[i,8] <- prod(sim.samp[i,1:7])
+}
+```
+
+
+<b><span style="color:blue"> 3)</span></b>  
+There are the empirical cumulative distribution function plots of $x_1$ and $x_2$:
+```{r, echo=FALSE}
+load('sim_samp.RData')
+attach(mtcars)
+par(mfrow=c(1,2))
+plot(ecdf(sim.samp[,4]),main='ecdf x1')
+plot(ecdf(sim.samp[,5]),main='ecdf x2')
+```
+
+
+As we can see from the plots, both components of $X$ are univariate Normal Distribuited; infact $X_1\sim N(2,2)$ and $X_2 \sim N(7,2)$
+
+
+
+
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+
+
+
+<center> <h2> <span style="color:#669999"> Last homework </span> </h2> </center>
+
+
+<b><span style="color:blue"> 10.3</span></b>  
+Let U and V be the two random variables from the table. We have seen that U and V are dependent with joint probability distribution
+
+<center> <img src="C:\Users\Umbertojunior\Pictures\Screenshots\tab10.png" width="200" height="40" alt="Computer Hope" /> </center>
+
+Determine the covariance $Cov(U, V)$ and the correlation coefficient $\rho(U, V )$
+
+<font size="-2"><b><span style="color:blue"> - answer </span></b></font>
+
+We have that:
+$$E(U)=1 \quad E(V)=\frac{1}{2} \quad E(UV)=\frac{1}{2} $$ 
+so, must be:
+$$Cov(U,V)=0 \quad and \quad \rho(U,V)=0$$
+
+&nbsp;
+&nbsp;
+
+<b><span style="color:blue"> 10.15</span></b>  
+In Figure three plots are displayed. For each plot we carried out a
+simulation in which we generated 500 realizations of a pair of random variables
+$(X,Y)$. We have chosen three different joint distributions of $X$ and $Y$.
+
+<center> <img src="C:\Users\Umbertojunior\Pictures\Screenshots\tab11.png" width="200" height="40" alt="Computer Hope" /> </center>
+
+<ol type="a">
+<li> Indicate for each plot whether it corresponds to random variables $X$ and $Y$ that are positively correlated, negatively correlated, or uncorrelated. </li>
+<li> Which plot corresponds to random variables $X$ and $Y$ for which $|\rho(X,Y)|$ is maximal? </li>
+</ol>
+
+<font size="-2"><b><span style="color:blue"> - answer </span></b></font>
+
+The First plot indicates that for the first sample of $X$ and $Y$ are uncorrelated, the second plot suggest that the second sample is positively correlated, while the third shows a negatively correlated sample.
+
+The last figure has a more concetrated dispensation, so it's suppose to be the one with largest $|\rho(X,Y)|$.
+
+&nbsp;
+&nbsp;
+
+<b><span style="color:blue"> Part II 3</span></b>  
+Let $\Omega$ be the sample space and $A$ and $B$ two events in $\Omega$.  Although we did not say this explicitly, we
+can define covariance and correlation for events too. The trick is to attach to each event a suitable
+random variable, and then apply the definition. The obvious choice for these random variable are
+indicator functions, that is, given an event $A \in \Omega$, define 
+
+$$1_A \begin{cases} 1 & \mbox{if the event } A \mbox{ occurs} \\  0 & \mbox{otherwise, that is, if } A^c \mbox{ occurs} \end{cases}$$
+
+Since $A$ is random, $1_A$ is also random. Based on this little trick, answer the following questions:
+<ol type="a">
+<li> What is the distribution of the random variable $Y=1_A$ ?</li>
+<li> Based on the previous answer, show that: 
+$$Cov(A,B)=P(A\cap B) - P(A)\cdot P(B)$$ </li>
+<li> Give a formula for the correlation coefficient $\rho(A,B)$. </li>
+</ol>
+
+<font size="-2"><b><span style="color:blue"> - answer </span></b></font>
+
+The evident distribution for these random variables are **Bernoulli** distribution, with probability equal to $p_A$ and $p_B$, therefore:
+<ul>
+<li> $E(A)=p_A$ and $Var(A)=p_A(1-p_A)$ </li>
+<li> $E(B)=p_B$ and $Var(B)=p_B(1-p_B)$ </li>
+</ul>
+
+Since:
+$$Cov(A,B)= E(AB) - E(A)E(B)$$
+
+we must compute $E(AB)$ that is equal to $P(A \cap   B)$, so:
+$$Cov(AB)= P(A \cap   B) - P(A)P(P)$$
+
+and
+$$\rho(AB)=\frac{Cov(AB)}{(p_a(1-p_A)p_B(1-p_B))^{-\frac{1}{2}}}$$  

@@ -1,0 +1,5 @@
+"0","pr <- function(thet) dnorm(thet, 0, (-5/qnorm(0.02)))"
+"0","jnt2 <- function(t) L2(t)*pr(t)"
+"0","m2.x_bar <- integrate(jnt2, -Inf, Inf)"
+"0","post2 <- function(t) jnt2(t)/m2.x_bar$value"
+"0","curve(post2, from = -10, to = 10, col='blue',ylab = 'Prior and Posterior')"

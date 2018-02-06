@@ -1,0 +1,191 @@
+---
+title: 'Homework #0 (aka Welcome Test)'
+author: |
+  | Stat4DS2+DS (key: `tardella2017`)
+  | <https://elearning2.uniroma1.it/course/view.php?id=4951>
+date: '**deadline 27/02/2017 (8:30)**'
+output: pdf_document
+---
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Your Last+First Name ______________ Your Matricola _________
+
+0. Do you know how to use an RMarkdown file to answer these questions with text and R code?
+```{r}
+#
+#
+#
+```
+
+
+1. Fix the *seed* to start the simulation of a single random variable from a (standard) uniform distribution on [0,1]. Use your *matricola* number as seed. 
+Call the simulated value `lambda`
+```{r,echo=FALSE,results='hide'}
+set.seed(123)
+lambda  = runif(1)
+```
+```{r}
+#
+#
+#
+```
+
+2. Simulate 1000 random variables using the following code
+```{r}
+X = runif(1000)
+Y = - lambda * log(X)
+```
+and then plot the histogram of the simulated values using the option `freq=FALSE`. 
+
+3. Can you **prove** that the theoretical distribution of $Y$ is exponential with rate equal to `1/lambda`? [explain or ... do it with all details!]
+
+```{r}
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+```
+
+4. Can you plot a graphical representation of the theoretical distribution? 
+
+```{r}
+#
+#
+#
+#
+#
+#
+#
+#
+#
+```
+
+5. Can you tell what is the relation between the theoretical curve of the density of $Y$ and the graph of the histogram?
+
+```{r}
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+```
+
+
+6. Suppose we have a random vector $(Z,Y)$ Do you know what a joint density $f_{Z,Y}(z,y)$ is?  What are the properties it must satisfy? 
+
+```{r}
+#
+#
+#
+#
+#
+#
+#
+#
+#
+```
+
+7. Can you derive in formula the distribution of $Z$? How it is called? 
+
+```{r}
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+```
+
+8. Conditionally on each simulated $Y_i=y_i$ (i=1,2,...,1000), simulate $Z_i = y_i*W_i$ where $W_i$ has distribution standard Normal and is independent of Y_i. What is the conditional distribution of $Z|Y=y$?
+
+```{r}
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+```
+
+9. Can you provide a simulation from the marginal distribution of $Z$? 
+
+```{r}
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+```
+
+10. Can you provide an approximation of the marginal distribution of $Z$? Please justify your answer. 
+
+```{r}
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+```
+
+11. How could you derive/write the joint distribution of $(Z,Y)$? 
+
+```{r}
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#
+```
+
+* * *
+<div class="footer"> &copy; 2016-2017 - Stat4DS2+CS - Luca Tardella </div>
+
+```{r, warning=FALSE, error=FALSE, message=FALSE, echo=FALSE}
+cat(paste0("This homework will be graded and it will be part of your final evaluation \n\n "))
+cat(paste("Last update by LT:",date()))
+```

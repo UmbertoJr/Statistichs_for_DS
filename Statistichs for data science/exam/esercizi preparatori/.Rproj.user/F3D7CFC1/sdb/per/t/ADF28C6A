@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "\n# Evaluate the PMF of a Poisson with a very large parameter: < lambda = 1472 >\nxx = 1300:1650\nPMF.pois = dpois(xx , lambda = 1472)\n\n# Plot  the Poisson(1472)\nplot(xx, PMF.pois, type='h', lwd=.1,\n     xlab = expression(lambda==1472), ylab = '',\n     main = 'Poisson vs Normal')\n\n#Add points\npoints(xx, PMF.pois, pch= '*', cex=1.5, col='red')\n\n#Add the density function of a Normal\ncurve(dnorm(x, mean = 1472, sd = sqrt(1472)), add=T, lwd= 6, col=rgb(0,1,1,0.2))\n\n\n### 27.2\n\npour.temp <- c(2543,2541,2544,2620,2560,2559,2562,2553,2552,2553)\nmean(pour.temp)\n\n#take a look to help \nt.test(pour.temp, mu = 2550, alternative = 'two.sided', conf.level = 0.99)\n\n\n# Exercise 7\n#data\nx1 <- c(.225, .262, .217, .240, .230, .229, .235, .217)\nx2 <- c(.209, .205, .196, .210, .202, .207, .224, .223, .220, .201)\ny <- c(rep('Twain', length(x1)), rep('Snodgrass', length(x2)))\ndta <- data.frame(Freq = c(x1, x2), Autor= y)\nstr(dta)\n\n# Take a look\nwith(dta,\n     boxplot(Freq ~ Autor, horizontal = T,\n             main = 'frequency', col= c('purple', 'gold')))\n\naggregate(Freq ~ Autor, data= dta, FUN= var)\n\nt.test(Freq ~ Autor,data = dta, var.equal=T)\n",
+    "created" : 1505134476846.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2394473109",
+    "id" : "ADF28C6A",
+    "lastKnownWriteTime" : 1505145204,
+    "last_content_update" : 1505145204582,
+    "path" : "C:/Users/Umbertojunior/Desktop/data science/Firts Semestr/SDS/exam/esercizi preparatori/training_Set4.R",
+    "project_path" : "training_Set4.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 5,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

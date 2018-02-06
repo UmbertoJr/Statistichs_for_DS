@@ -1,0 +1,52 @@
+---
+title: "Welcome Test  1388371"
+author: "Mele Umberto Junior"
+date: "Thursday, February 23, 2017"
+output: html_document
+---
+<h4 style='color:blue' > 0)  Do you know how to use an RMarkdown file to answer these questions with text and R code?   
+
+```{r, echo=FALSE}
+cat('Yes, I Know!')
+```
+
+1) Fix the seed to start the simulation of a single random variable from a (standard) uniform distribution on $[0,1]$. Use your matricola number as seed. Call the simulated value $lambda$
+
+```{r, echo=TRUE}
+set.seed(1388371)
+lambda = runif(1)
+lambda
+```
+
+2) Simulate 1000 random variables using the following code
+
+
+```{r}
+X = runif(1000)
+Y = - lambda * log(X)
+hist(Y, freq=FALSE)
+```
+
+
+3) Can you show that the theoretical distribution of Y is exponential with rate equal to $\frac{1}{lambda}$? [explain or . . . do it!]
+4) Can you plot a graphical representation of the theoretical distribution ?
+
+```{r echo=FALSE}
+cat('Yes, of course!!!')
+
+```
+
+```{r echo=TRUE}
+hist(Y, freq=FALSE)
+curve(dexp(x, rate = 1/lambda), add=TRUE, col='blue')
+```
+
+5) Can you tell what is the relation between the theoretical curve of the density of Y and the graph of the histogram?
+
+```{r}
+
+```
+
+
+
+

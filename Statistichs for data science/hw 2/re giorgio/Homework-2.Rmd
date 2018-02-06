@@ -1,0 +1,662 @@
+---
+title: 'Homework #2'
+author: |
+  | Stat4DS2+DS
+  | <https://elearning2.uniroma1.it/course/view.php?id=4951>
+date: '**deadline 23/05/2017 (23:55)**'
+output:
+  pdf_document:
+    keep_tex: yes
+    toc: no
+header-includes: \usepackage{graphicx}
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Your Last+First Name __GIANNONE_GIORGIO__ Your Matricola ____
+
+1a)  Illustrate the characteristics of the statistical model for dealing with the *Dugong*'s data. Lengths ($Y_i$)  and  ages ($x_i$) of  27 Dugongs have been recorded and the
+  following (non linear)  regression model is considered:
+\begin{eqnarray*}
+Y_i &\sim& N(\mu_i, \tau^2) \\
+\mu_i=f(x_i)&=& \alpha - \beta \gamma^{x_i}\\
+\end{eqnarray*}
+Model parameters are
+$\alpha \in (1, \infty)$,
+$\beta \in (1, \infty)$,
+$\gamma \in (0,1)$,
+$\tau^2 \in (0,\infty)$. 
+Let us consider the following prior distributions:
+\begin{eqnarray*}
+\alpha &\sim&  N(0,\sigma^2_{\alpha})\\
+\beta  &\sim&  N(0,\sigma^2_{\beta}) \\
+\gamma &\sim&  Unif(0,1)\\
+\tau^2 &\sim&  IG(a,b)) (Inverse Gamma)
+\end{eqnarray*}
+
+
+1b)  Derive the corresponding likelihood function
+
+In this case, fixed the parameters, $Y_i|\tau^2,\mu_i \sim N(\mu_i, \tau^2)$; so to obtain the corresponding likelihood function we have to compute $L(\theta) = f(y_1,....,y_n|\mu,\tau^2)$; and because the observations are conditionally indipendent and identically distributed we can write
+\[
+L(\theta) = \prod_{i=1}^n f(y_i|\mu_i,\tau^2) = \frac{\tau^n}{(2\pi)^{n/2}}  \exp\{ -\frac{1}{2}\sum_{i=1}^n (y_i - \mu_i)^2 \tau^2 \}
+\]
+where $\mu_i = \alpha - \beta \gamma^{x_i}$.
+The likelihood is a function of $\alpha,\beta,\gamma,\tau^2$.
+
+
+1c)  Write down the expression of the joint prior distribution of the parameters at stake and illustrate your suitable choice for the hyperparameters.
+
+The joint prior is $\pi(\alpha,\beta,\gamma,\tau^2)$ and because the parameters are reciprocally indipendents we can write
+$\pi(\alpha)\pi(\beta)\pi(\gamma)\pi(\tau^2)$ and finally
+\[
+\pi(\theta) = \frac{1}{2\pi}\exp\{-\frac{1}{2}(\alpha^2\sigma_{\alpha}^{-2})\}  \frac{1}{2\pi}\exp\{-\frac{1}{2}(\beta^2\sigma_{\beta}^{-2})\} I_{[0,1]} 
+\frac{b^a}{\Gamma(a)} \tau_2^{(-a-1)} \exp(-\frac{b}{\tau^2})
+\]
+
+```{r 1c, eval=FALSE, include=FALSE}
+
+require(invgamma)
+
+dugong = read.table("dugong-data.txt",header = TRUE)
+dugong
+X = dugong$Age
+Y = dugong$Length
+Y
+plot(X, Y, xlab = "Age", ylab = "Length", col = "blue", main = "dugong's data")
+
+#hist(X,freq = FALSE)
+#hist(Y,freq = FALSE,xlim = c(0,40))
+
+mean_y = mean(Y)
+var_y = var(Y)
+
+mean_y
+var_y
+
+###############################################################################
+
+## create useful functions
+
+#alpha
+dAlpha = function(x, sigma_alpha){
+    
+    res = dnorm(x, mean = 0, sd = sqrt(sigma_alpha)) * (x > 1)
+    return (res)
+}
+dAlpha_normalized = function(x, sigma_alpha){
+    
+    den = integrate(function(x) dAlpha(x,sigma_alpha),
+                    lower = -Inf, upper =  +Inf)[[1]]
+    
+    return (dAlpha(x,sigma_alpha)/den)
+}
+curve( dAlpha_normalized(x, 2) ,0,10, xlab = "alpha", ylab = "p(alpha)")
+integrate(function(x) dAlpha_normalized(x,2),lower = -Inf, upper =  +Inf)
+
+#beta
+dBeta = function(x, sigma_beta){
+    
+    res = dnorm(x, mean = 0, sd = sqrt(sigma_beta)) * (x > 1)
+    
+    return (res)
+}
+dBeta_normalized = function(x, sigma_beta){
+    
+    den = integrate(function(x) dBeta(x,sigma_beta),
+                    lower = -Inf, upper =  +Inf)[[1]]
+    
+    return (dBeta(x,sigma_beta)/den)
+}
+curve( dBeta_normalized(x, 2) ,0,10, xlab = "beta", ylab = "p(beta)")
+integrate(function(x) dBeta_normalized(x,2),lower = -Inf, upper =  +Inf)
+
+#gamma
+dGamma = function(x, min = 0, max = 1){
+    
+    res = dunif(x, min = 0, max = 1)
+    return (res)
+}
+curve( dGamma(x) ,-1,10, xlab = "gamma", ylab = "p(gamma)")
+integrate(function(x) dGamma(x),lower = -Inf, upper =  +Inf)
+
+#tau
+dTau2 = function(x, a, b){
+    
+    res = dinvgamma(x, a, b) * (x > 0)
+    return(res)
+}
+curve( dTau2(x,2,2) ,0,10, xlab = "tau2", ylab = "p(tau2)")
+integrate(function(x) dTau2(x,1,1),lower = 0, upper =  +Inf)
+
+#sample
+rAlpha = function(n, sigma_alpha){
+    
+    res = rnorm(n, mean = 0, sd = sqrt(sigma_alpha))
+    res = res[res > 1]
+    
+    return (res)
+}
+rBeta = function(n, sigma_beta){
+    
+    res = rnorm(n, mean = 0, sd = sqrt(sigma_beta))
+    res = res[res > 1]
+    
+    return (res)
+}
+rGamma = function(n, min = 0, max = 1){
+    
+    res = runif(n, min = min, max = max)
+    return (res[res < 1 && res > 0])
+}
+rTau2 = function(n, a, b){
+    
+    res = rinvgamma(n, a, b)
+    res = res[res >0]
+    return(res)
+}
+
+#use this function to choose the hyperparameters
+mu = function(X, alpha, beta, gamma){
+    res = ( alpha - beta * gamma^(mean(X)))
+    return (res)
+    
+}
+
+# use this function after the fix of the hyperparameters 
+mu_opt = function(X, alpha, beta, gamma){
+    
+    s = min(length(alpha), length(beta), length(gamma))
+        
+    alpha = alpha[1:s]
+    beta  = beta[1:s]
+    gamma = gamma[1:s]
+    
+    res = ( alpha - beta * gamma^(X) )
+    res = res[res > 0]
+    return (res)
+    
+}
+
+
+hist(rAlpha(10000,10), freq = FALSE, col = "green")
+curve(dAlpha(x,10),add = TRUE, col = "red", lwd = 4)
+curve(dAlpha_normalized(x,10),add = TRUE, col = "blue", lwd = 4)
+
+#########################################################################################
+Y
+# I decided to choose the hyperparameters for alpha and beta starting choosing some value for alpha and beta to obtain a low number of outcome smaller that zero and bigger than because m_i is length
+N = 10000
+alpha = seq(1,10,1)
+beta = seq(1,10,1)
+
+choose_alpha_beta = function(N, alpha, beta){
+    
+    out = matrix(NA, nrow = length(alpha), ncol = length(beta))
+    
+    for (i in 1:length(alpha)){
+        for (j in 1:length(beta)){
+            
+            m = mu(X,alpha[i],beta[j],rGamma(N))
+            
+            if (length(m) == 0){
+                m = -1
+            }
+            
+            neg = length(m[ m < 0 ]*1)/length(m) + length(m[ m > 4 ]*1)/length(m)
+            out[i,j] = neg
+        }
+    }
+    
+    return (out)
+    }
+
+out = choose_alpha_beta(N, alpha, beta)
+out
+
+ix = which(out == min(out), arr.ind = TRUE)
+
+# I take these
+alpha_opt = 3
+beta_opt = 2
+
+#--------------------------------------------------------------------------------------
+
+# now choose hyperparameters sigma_alpha and sigma_beta
+#to obtain in average my choice for alpha_opt and beta_opt
+sigma_alpha = seq(0,100,1)
+sigma_beta = seq(0,100,1)
+
+# choose sigma_alpha and sigma_beta
+N = 1000
+
+choose_sigmaAlpha_sigmaBeta = function(N, sigma_alpha, sigma_beta, 
+                                       alpha_opt, beta_opt){
+    
+    err_alpha = rep(NA, nrow = length(sigma_alpha))
+    err_beta = rep(NA, nrow = length(sigma_beta))
+
+    for ( i in 1:length(sigma_alpha) ){
+        
+        alpha = rAlpha(N,sigma_alpha[i])
+        beta = rBeta(N,sigma_beta[i])
+        
+        err_alpha[i] = mean((mean(alpha) - alpha_opt)^2)
+        err_beta[i] = mean((mean(beta) - beta_opt)^2) 
+        }
+    
+    ix_alpha = which(err_alpha == min(err_alpha,na.rm = TRUE), arr.ind = TRUE)
+    ix_beta = which(err_beta == min(err_beta,na.rm = TRUE), arr.ind = TRUE)
+    
+    sigma_alpha_opt = sigma_alpha[ix_alpha[1]]
+    sigma_beta_opt = sigma_beta[ix_beta[1]]
+    
+    return(list(sigma_alpha_opt,sigma_beta_opt))
+    
+}
+
+sigmas = choose_sigmaAlpha_sigmaBeta(N, sigma_alpha, 
+                                     sigma_beta,alpha_opt, beta_opt)
+
+sigma_alpha_opt = sigmas[[1]]
+sigma_beta_opt = sigmas[[2]]
+
+sigma_alpha_opt
+sigma_beta_opt
+
+curve(dAlpha_normalized(x,sigma_alpha_opt),0,10)
+curve(dBeta_normalized(x,sigma_beta_opt),0,10)
+
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+# now we choose parameters a and b
+
+N = 1000
+a = seq(1,10,1)
+b = seq(1,10,1)
+
+choose_A_B = function(N,a,b, sigma_alpha_opt, sigma_beta_opt){
+
+    out = matrix(NA, nrow = length(a), ncol = length(b))
+    
+    for (i in 1:length(a)){
+        for (j in 1:length(b)){
+            
+            alpha = rAlpha(N,sigma_alpha_opt)
+            beta = rBeta(N,sigma_beta_opt)
+            gamma = rGamma(N)
+            s = min(length(alpha), length(beta), length(gamma))
+            
+            alpha = alpha[1:s]
+            beta  = beta[1:s]
+            gamma = gamma[1:s]
+        
+            m = mu(X, alpha, beta, gamma)
+            sample_mean = mean(m)
+            length_mean = length(m)
+            
+            sample_tau2 = rinvgamma(length_mean,a[i],b[j])
+            
+            sample_y = rnorm(length_mean, mean = m, sd = 1/(sqrt(sample_tau2)))
+            #sd_sample = sd(sample_y)
+            
+            # penaly if the output is negative
+            out[i,j] = length((sample_y[sample_y < 0])*1)/length_mean + 
+                                        length((sample_y[sample_y > 4])*1)/length_mean
+        }
+    }
+    
+    return(out)
+}
+out = choose_A_B(N,a,b, sigma_alpha_opt,sigma_beta_opt)
+ix_out = which(out == min(out,na.rm = TRUE), arr.ind = TRUE)
+a_opt = a[ix_out[1,1]]
+b_opt = b[ix_out[1,2]]
+
+a_opt
+b_opt
+
+curve(dTau2(x,a_opt,b_opt),0,10)
+
+#--------------------------------------------------------------------------------------
+# final check
+
+N = 10000
+n_iter = 1000
+
+check = function(N,n_iterm,sigma_alpha_opt, sigma_beta_opt, a_opt, b_opt){
+    Y = rep(NA,N)
+    
+    for (n in 1:n_iter){
+        
+        alpha = rAlpha(N,sigma_alpha_opt)
+        beta = rBeta(N,sigma_beta_opt)
+        gamma = rGamma(N)
+        s = min(length(alpha), length(beta), length(gamma))
+        
+        alpha = alpha[1:s]
+        beta  = beta[1:s]
+        gamma = gamma[1:s]
+        
+        m = mu(mean(X), alpha, beta, gamma)
+        
+        length_mean = length(m)
+        
+        tau2 = rinvgamma(length_mean,a_opt,b_opt)
+        
+        if (length(m[ m < 0 || m > 4]*1) > 0){
+            
+            print(n)
+            print("length")
+            print(length(m[m < 0]*1)/length(m) + length(m[m > 4]*1)/length(m))
+        }
+        
+        y = rnorm(length_mean, mean = m, sd = 1/sqrt(tau2))
+        
+        Y[n] = mean(y)
+    }
+    hist(Y)
+    
+}
+check(N, n_iter, sigma_alpha_opt, sigma_beta_opt, a_opt, b_opt)
+
+
+```
+
+1d)  Compute \underline{numerically}  the maximum likelihood estimate for the vector of parameters of interest $(\alpha , \beta , \gamma , \tau^2)$ and compare it with the Maximum-a-Posterori estimate
+
+```{r}
+
+class(X)
+Y
+likelihood = function(X,Y,par){
+    
+    alpha = par[1]
+    beta  = par[2]
+    gamma = par[3]
+    tau2  = par[4]
+    
+    mu = alpha - beta * gamma^X
+    
+    res = sum(log1p(dnorm(Y,mean = mu, sd = 1/sqrt(tau2))))
+    
+    return (res)
+}
+#likelihood = Vectorize(likelihood_point)
+
+choose_mle_optimal = function(){
+    
+    res = matrix(NA, nrow = 100, ncol = 5)
+    for (i in 1:100){
+        result = optim(par = c(i,i*4,i/100,i*100), 
+                   likelihood, X = X, Y = Y,
+                   control=list(fnscale=-1))
+        
+        res[i,1:4] = result$par
+        res[i,5] = result$value
+        
+}
+    mle_optimal = c(0,0,0,0)
+    
+    N = nrow(res)
+    values = res[,5]
+    for(j in 1:N){
+        
+        ix = which(values == max(values))
+        mle_optimal = res[ix,1:4]
+        
+        condition = ((mle_optimal[1] > 1) && (mle_optimal[2] > 1) && (mle_optimal[3] > 0) && 
+            (mle_optimal[3] < 1) && (mle_optimal[4] > 0))
+        
+        if (condition == TRUE){
+            return(res[ix,])
+            
+        }
+        else{
+            values[ix] = -1
+        }
+    }
+    values = res[,5]
+    ix = which(values == max(values))
+    return(res[ix,])
+}
+
+res = choose_mle_optimal()
+res
+
+mle_optimal = res[1:4]
+mle_optimal_value = res[5]
+
+mle_optimal
+mle_optimal_value
+
+#---------------------------------------------------------------
+##compute posterior
+require(cubature)
+
+prior = function(par,sigma_alpha_opt,sigma_beta_opt,a_opt,b_opt){
+    
+    alpha = par[1]
+    beta  = par[2]
+    gamma = par[3]
+    tau2  = par[4]
+    
+    res = dAlpha_normalized(alpha,sigma_alpha_opt) * 
+        dBeta_normalized(beta, sigma_beta_opt) * 
+        dGamma(gamma) * dinvgamma(tau2,a_opt,b_opt)
+    
+    return(res)
+}
+
+par = c(2,2,0.5,2)
+prior(par,sigma_alpha_opt,sigma_beta_opt,a_opt,b_opt)
+
+posterior = function(par,sigma_alpha_opt,sigma_beta_opt,a_opt,b_opt,X,Y){
+    
+    res = likelihood(X,Y,par) * prior(par,sigma_alpha_opt,sigma_beta_opt,a_opt,b_opt)
+    den = adaptIntegrate(function(par) res,-Inf,+Inf)
+    
+    #res = res/den
+    
+    return(res)
+}
+posterior(par,sigma_alpha_opt,sigma_beta_opt,a_opt,b_opt,X,Y)
+
+
+res = matrix(NA, nrow = 100, ncol = 5)
+for (i in 1:100){
+    result = optim(par = c(i,i,i/100,i), 
+               posterior, X = X, Y = Y, sigma_alpha_opt = sigma_alpha_opt,
+               sigma_beta_opt = sigma_beta_opt, a_opt = a_opt, b_opt = b_opt,
+               control=list(fnscale=-1))
+    
+    res[i,1:4] = result$par
+    res[i,5] = result$value
+    
+}
+res
+
+values = res[,5]
+ix = which(values == max(values))
+posterior_optimal = res[ix,1:4]
+posterior(posterior_optimal,sigma_alpha_opt,sigma_beta_opt,a_opt,b_opt,X,Y)
+values[ix]
+mle_optimal
+posterior_optimal
+
+    
+```
+
+\newpage
+
+2)  Consider the Acceptance-Rejection algorithm in the most general
+  form and denote with $\theta=Y^A$ the random variable obtained with the algorithm
+
+2a)  Determine the analytic expression of the acceptance probability
+
+2b)  Prove that $\theta$ has the desired target distribution
+
+2c)  Show how in Bayesian inference you could use simulations from
+  the prior (auxiliary density) to get a random  draw from the
+  posterior (target distribution)  without knowing the proportionality constant
+
+2d)  Illustrate analytically possible difficulties of this approach 
+with a simple conjugate model 
+
+2e)  Verify your conclusions implementing the Acceptance-Rejection
+  approach with  your conjugate model 
+(verify empirically that  $\theta$ has the desired target distribution $\pi(\theta|x_1,..,x_n)$ 
+
+(*write your answer; provide your R code for the last point*)
+
+```{r}
+#
+#
+#
+#
+#
+#
+#
+#
+#
+```
+
+\newpage
+
+3)  Simulate from a standard Normal distribution using 
+pseudo-random deviates from a standard Cauchy 
+and the A-R algorithm. Write the expression the corresponding  acceptance probability  and evaluate it numerically by MC approximation.
+
+
+```{r}
+#
+#
+#
+#
+#
+#
+#
+#
+#
+```
+
+
+\newpage
+
+4)  Let us consider a Markov chain 
+$(X_t)_{t \geq 0}$
+defined on the state space ${\cal S}=\{1,2,3\}$
+with the following transition 
+
+
+
+\begin{center} 
+\end{center}
+
+
+
+4a)  Starting at time $t=0$ in the state  $X_0=1$
+simulate the Markov chain with distribution assigned as above
+for $t=1000$ consecutive times
+
+4b)  compute the empirical relative frequency of the two states in
+  your simulation
+4c)  repeat the simulation for 500 times and record only 
+the final state at time $t=1000$ for each of the 
+  500 simulated chains. Compute the relative
+  frequency of the 500 final states.
+What distribution are you approximating in this way?  
+Try to formalize the difference between this point and the previous
+point. 
+
+4d)  compute the theoretical stationary distribution $\pi$ and explain how
+  you have obtained it
+
+4e)  is it well approximated by the simulated empirical relative
+  frequencies computed in (b) and (c)?
+  
+4f)  what happens if we start at $t=0$ from state 
+$X_0=2$ instead of  $X_0=1$?
+
+
+
+```{r}
+#
+#
+#
+#
+#
+#
+#
+#
+#
+```
+
+\newpage
+
+
+5)  Consider again the Bayesian model for Dugong's data (data available at <https://elearning2.uniroma1.it/mod/resource/view.php?id=147042>):
+
+5a)  Derive the functional form  (up to proportionality constants) of all *full-conditionals*
+
+5b)  Which distribution can you recognize within standard parametric
+  families
+so that direct simulation from full conditional can be easily implemented ?
+
+5c)  Using a suitable Metropolis-within-Gibbs algorithm simulate a Markov chain 
+($T=10000$) to approximate the posterior distribution for the above model
+
+5d)  Show the 4 univariate trace-plots of the simulations of each parameter
+
+5e)  Evaluate graphically the behaviour of the empirical averages 
+$\hat{I}_t$  with growing $t=1,...,T$
+
+5f)  Provide estimates for each parameter together with the
+  approximation error and explain how you have evaluated such error
+
+5g)  Which parameter has the largest posterior uncertainty? How did
+  you measure it?
+
+5h)  Which couple of parameters has the largest correlation (in
+  absolute value)?
+
+5i)  Use the Markov chain to approximate the posterior predictive 
+distribution of the length
+  of a dugong with age of 20 years.
+
+5j)  Provide the prediction of another  dugong with age 30 
+
+5k)  Which prediction is less precise?
+
+
+
+
+```{r}
+
+#
+#
+#
+#
+#
+#
+#
+#
+#
+```
+
+
+* * *
+<div class="footer"> &copy; 2016-2017 - Stat4DS2+CS - Luca Tardella </div>
+
+
+
+
+```{r, warning=FALSE, error=FALSE, message=FALSE, echo=FALSE}
+cat(paste0("This homework will be graded and it will be part of your final evaluation \n\n "))
+cat(paste("Last update by LT:",date()))
+```
+
+

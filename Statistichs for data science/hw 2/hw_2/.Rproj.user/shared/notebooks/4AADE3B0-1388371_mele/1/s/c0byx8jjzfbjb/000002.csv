@@ -1,0 +1,25 @@
+"0","ntimes <- 500
+nsample<-1000
+t1000 <-rep(NA,ntimes)
+for(i in 1:ntimes){
+  chain2<-rep(NA,nsample+1) # vector that will hold
+  chain2[1]<-t0             # starting value x1 assigned to chain[1]
+  for(t in 1:nsample){
+    chain2[t+1]<-sample(states,size=1,prob=transition_matrix[chain2[t],])
+  }
+  t1000[i]<- chain2[nsample+1]
+}
+prop.table(table(t1000))
+"
+"1","t1000
+"
+"1","    1 "
+"1","    2 "
+"1","    3 "
+"1","
+"
+"1","0.402 "
+"1","0.324 "
+"1","0.274 "
+"1","
+"

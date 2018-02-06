@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "\n#  question C -------------------------------------------------------------\n\n## Plot the likelihood\n\n#Data\nxx <- c(-1,-1,0)\ntheta.hat <- function(x) mean(abs(x))\nmle <- theta.hat(xx)\n\n#Likelihood function\nL <- function(theta, x){\n  n <- length(x)\n  jnk <- sum(abs(x))\n  out <- ((theta/2)^jnk)*((1 - theta)^(n - jnk))\n  return(out)\n}\n\n#Plot\ncurve(L(x,xx), from= 0, to=1, lwd=4, col='orchid', xlab = expression(theta), ylab = 'Likelihood function')\nsegments(mle, 0, mle, L(mle,xx), lty= 3, col='green')\ntext(mle,0.03, bquote(hat(theta)== .(round(mle,2))), pos=2, cex = .8)\ngrid()\n\n\n## Write a function my.pmf(x, theta) that implements p(x|theta), and then use it together \n## with sample() to build a parametric bootstrap routine in order to evaluate bias and standard \n## error of MLE (based on MLE). Finally, find a 90% confidence interval for theta.\n\n#Sampling from the disccrete model via <sample>\npmf <- function(x, theta){\n  if((theta>1)||(theta<0)) stop(\"the parameter <theta> must be in (0,1)\")\n  support <- c(-1,0,1)\n  out <- ((theta/2)^abs(x))*((1 - theta)^(1 - abs(x)))*(x %in% support)\n  return(out)\n}\n\n# Parametric Boostrap\nn <- length(xx)\nB <- 1000\nt.boot <- rep(NA, B)\nset.seed(123)\nfor(b in 1:B){\n  x.boot <- sample(c(-1,0,1), n, replace = T, prob = c(pmf(-1, mle),pmf(0, mle), pmf(1, mle)))\n  t.boot[b] <- theta.hat(x.boot)\n}\n\n#Bias via Parametric Bootstrap\ncat('---PBoot / Bias ----\\n')\nround(mean(t.boot) - mle, 3)\n\n#SE via Parametric Bootstrap\ncat('---PBoot / SE ----\\n')\nround(sd(t.boot), 3)\n\n#Parametric bootstrap CI\ncat('---PBoot CI(0.90) ----\\n')\nround(c(lower= mle - qnorm(1 - 0.1/2)*sd(t.boot),\n        upper= mle + qnorm(1 - 0.1/2)*sd(t.boot)), 3)\n\n\n#Sample\nn <- 100\nt.true <- 0.7 \ndta <- sample(c(-1,0,1), n, replace = T, prob = c(pmf(-1, t.true),pmf(0, t.true), pmf(1, t.true)))\nmle <- theta.hat(dta)\n\n\n#Parametric bootstrap\nB = 1000\nt.boot <- rep(NA, B)\nfor(b in 1:B){\n  x.boot <- sample(c(-1,0,1), n, replace = T, prob = c(pmf(-1, mle),pmf(0, mle), pmf(1, mle)))\n  t.boot[b] <- theta.hat(x.boot)\n}\n\n#Bias via Parametric Bootstrap\ncat('---PBoot / Bias ----\\n')\nround(mean(t.boot) - mle, 3)\n\n#SE via Parametric Bootstrap\ncat('---PBoot / SE ----\\n')\nround(sd(t.boot), 3)\n\n#Parametric bootstrap CI\ncat('---PBoot CI(0.90) ----\\n')\nround(c(lower= mle - qnorm(1 - 0.1/2)*sd(t.boot),\n        upper= mle + qnorm(1 - 0.1/2)*sd(t.boot)), 3)\n\n\n## Bonus\n\n# Data\nxx <- c(-1, -1, 0)\nmle <- theta.hat(xx)\nse.hat <- function(x) sqrt((theta.hat(x))*(1 - theta.hat(x))/length(x))\n\n\n#Bias via Parametric Bootstrap\ncat('---MLE ----\\n')\nround(mle, 3)\n\n#SE via Parametric Bootstrap\ncat('---SE ----\\n')\nround(se.hat(xx), 3)\n\n#Parametric bootstrap CI\ncat('---PBoot CI(0.90) ----\\n')\nround(c(lower= mle - qnorm(1 - 0.1/2)*se.hat(xx),\n        upper= mle + qnorm(1 - 0.1/2)*se.hat(xx)), 3)\n\n",
+    "created" : 1504087334565.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2729531876",
+    "id" : "D8F4378C",
+    "lastKnownWriteTime" : 1504141572,
+    "last_content_update" : 1504141572492,
+    "path" : "C:/Users/Umbertojunior/Desktop/data science/Firts Semestr/SDS/exam/esercizi preparatori/esame1.R",
+    "project_path" : "esame1.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

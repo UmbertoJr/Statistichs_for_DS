@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "require(boot, quietly = T)\n\n# True interquantila range\niqr.true <- (qt(0.75, df=3) - qt(0.25, df=3))/1.34\n\n# Empirical interquantile range\niqr <- function(x, idx) (quantile(x[idx], 0.75) - quantile(x[idx], 0.25))/1.34\n\nn = 25 # sample size\nM=1000 # simulation size\nB=1000 # bootstrap size\n\n# Data structure 1\ncover.mat <- matrix(NA, nrow = M, ncol = 3)\ncolnames(cover.mat) <- c('Normal', 'percentile', 'pivotal')\n\n# data structure 2\nlen.mat <- matrix(NA,nrow = M, ncol = 3)\ncolnames(len.mat) <- c('Normal', 'percentile', 'pivotal')\n\n# Main loop\nset.seed(1231)\nfor(m in 1:M){\n  # sample from a t-student with df=3\n  x.sim <- rt(n,df=3)\n  # plug-in estimator\n  iqr.hat <- iqr(x.sim)\n  # bootstrap\n  t.boot <- boot(x.sim, iqr, B)\n  \n  # Calculate CI's\n  normal <- c(iqr.hat - 2*sd(t.boot$t), iqr.hat + 2*sd(t.boot$t) )\n  percen <- c(quantile(t.boot$t, 0.025), quantile(t.boot$t, 0.975))\n  pivot <- c(2*iqr.hat - quantile(t.boot$t, 0.975),2*iqr.hat - quantile(t.boot$t, 0.025) )\n  \n  # Check if they cover or not\n  cover.mat[m, 1] <- (iqr.true >= normal[1]) & (iqr.true <= normal[2])\n  cover.mat[m, 2] <- (iqr.true >= percen[1]) & (iqr.true <= percen[2])\n  cover.mat[m, 3] <- (iqr.true >= pivot[1]) & (iqr.true <= pivot[2])\n  # store the length\n  len.mat[m, 1] <- normal[2] - normal[1]\n  len.mat[m, 2] <- percen[2] - percen[1]\n  len.mat[m, 3] <- pivot[2] - pivot[1]\n}\n\nsave(file = 'simulation_data.RData', cover.mat, len.mat)\n#load('simulation_data.RData')\ncolMeans(cover.mat)\n\ncolMeans(len.mat)\n\n\nlen.df <- data.frame(Length = c(len.mat),\n                     Type = factor(c(rep('Normal', M), rep('Percentile'), rep('Pivotal', M))))\n\n\n\n\n\n# normal approxiamtion of the binomial distribution\n\nn = 323\np = 0.35\nM = 1e4\n\nbinom.sample <- rbinom(M, size = n, prob = p)\n\nhist(scale(binom.sample), breaks = 25, probability = T, col= rgb(.5,0,.5,.2),\n     main = 'Sample from a Bin(n,p')\ncurve(dnorm(x), add=T, col=6, lwd=3)\n\n\n\n# Wald test for poisson\n\nmu0 <- 1\nn <- 20\na <- 0.05\nM <- 1000\nz.a <- qnorm(1 - a/2)\n\nset.seed(123)\n\nX <- matrix(rpois(n*M, lambda = mu0), nrow = M, ncol = n)\n\n# MLE & SE\n\nmle <- rowMeans(X)\nse <- sqrt(mle/n)\n\n# Wald test\nW <- (mle - mu0)/se\n\n# frequency of rejection\nmean(abs(W)>z.a)\n\n\n\n\n# Exercise 2\n\n# compute the p-value of a t-test (comparison of variable)\nMyStudent <- function(response, group){\n  z = t.test(response ~ group, var.equal = T)\n  z = z$p.value\n  return(z)\n}\n\n\nrequire(mvtnorm, quietly = T)\n\nn=30\nm=500\n\nset.seed(123)\n\ndta0 =rmvnorm(2*n, mean = rep(0,m))\n\ngr <- factor(rep(c(1,2), c(n,n)))\n\npval <- apply(dta0, 2, MyStudent, group = gr)\n\nhist(pval, nclass = 10, col = 'darkgray')\n",
+    "created" : 1505146547012.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "756412716",
+    "id" : "C31FCBEB",
+    "lastKnownWriteTime" : 1505213868,
+    "last_content_update" : 1505213868437,
+    "path" : "C:/Users/Umbertojunior/Desktop/data science/Firts Semestr/SDS/exam/esercizi preparatori/training_Set2.R",
+    "project_path" : "training_Set2.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 6,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

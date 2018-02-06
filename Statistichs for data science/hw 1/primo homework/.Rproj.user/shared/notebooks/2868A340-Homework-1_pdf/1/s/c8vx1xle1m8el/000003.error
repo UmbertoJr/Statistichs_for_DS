@@ -1,0 +1,1 @@
+{"frames":[{"character_number":0,"end_character_number":0,"end_line_number":0,"file":"","func":"dbeta(t, 1, 1)","line_number":0}],"message":"Error in dbeta(t, 1, 1) : \n  Argomento non numerico in una funzione matematica\n"}

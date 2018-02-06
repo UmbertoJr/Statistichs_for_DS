@@ -1,0 +1,5 @@
+"0","jnt1 <- function(t) L1(t)*pr(t)"
+"0","m1.x_bar <- integrate(jnt1, -Inf, Inf)"
+"0","post1 <- function(t) jnt1(t)/m1.x_bar$value"
+"0","curve(post1, from = 0, to = 10, ylab = expression(posterior), "
+"0","      xlab = expression(theta), col='green')"

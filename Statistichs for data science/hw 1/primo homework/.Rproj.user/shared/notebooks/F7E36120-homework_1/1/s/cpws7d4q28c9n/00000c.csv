@@ -1,0 +1,7 @@
+"0","prior <- function(t) dunif(t)*(t>0 & t<1 )"
+"0","L <-  function(t) dbinom(57,100,t)"
+"0","joint <- function(t) L(t)*prior(t)"
+"0","m <- integrate(joint,0,1)"
+"0","posterior <- function(t) prior(t)*L(t)/m$value"
+"0","posterior <- Vectorize(posterior)"
+"0","curve(posterior, col = 'violet')"

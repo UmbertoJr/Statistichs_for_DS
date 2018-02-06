@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "# Question B Prob\n\n#Check it's a density\nintegrate( function(x) 1/(2 *sqrt(1 - x)), 0,1)\nintegrate(function(y) 1/(2*y*sqrt(2 - log(y))), exp(1), exp(2))\n\n#Take a look\npar(mfrow=c(1,2))\ncurve(1/(2 *sqrt(1 - x)), 0,1, \n      col = 'purple', lwd= 4,\n      main = 'density (before)', xlab = 'x', ylab = expression(f[X](x)))\ncurve(1/(2*x*sqrt(2 - log(x))), exp(1), exp(2), \n      col = 'lavender', lwd= 4,\n      main = 'density (after)', xlab = 'y', ylab = expression(f[Y](y)))\n",
+    "created" : 1504941520631.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3685540098",
+    "id" : "9B740895",
+    "lastKnownWriteTime" : 1505134475,
+    "last_content_update" : 1505134475392,
+    "path" : "C:/Users/Umbertojunior/Desktop/data science/Firts Semestr/SDS/exam/esercizi preparatori/esame4.R",
+    "project_path" : "esame4.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 4,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

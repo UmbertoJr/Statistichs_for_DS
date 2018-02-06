@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "# Question C\n\n#Data\nxx <- c(0.65, 0.48, 0.08, 0.11, 0.8, 0.67, 0.38, 0.63, 0.1, 0.03)\n#MLE for psi\npsi.ml <- function(x) - length(x)/sum(log(1- x))\nround(psi.ml(xx),2)\n\n#MLE for tau\ntau.ml <- function(x) 1/(1 + psi.ml(x))\nround(tau.ml(xx),2)\n\n#Wald test\n\ntau0 <- 1\n#SE for tau \nse.tau <- function(x) (1/((1 + psi.ml(x))^2)) * ( abs(psi.ml(x))/sqrt(length(x)))\n#Wald statistics\nabs((tau.ml(xx) - tau0)/se.tau(xx))\n\n\n# Likelihood function\nL <- function(psi, x){\n  n <- length(x)\n  s <- prod((1 -x))\n  out <- psi^n * s^(psi - 1)\n  return(out)\n}\n\n\n# MLE\nmle <- psi.ml(xx)\n\n#Plot\ncurve(L(x, xx), from=0, to = 4, lwd = 4, col='orchid',\n      xlab = expression(psi), ylab = 'Likelihood function')\nsegments(mle, 0, mle, L(mle, xx), lty = 3, col = 'pink2')\ntext(mle, 0.05, bquote(hat(psi)== .(round(mle, 2))), pos = 2, cex = .9)\ngrid()\n\n\n# Parametric Boostrap\nn <- length(xx)\nB <- 1000\ntau.boot  <- rep(NA, B)\nset.seed(123)\nfor(b in 1:B){\n  x.boot <- rbeta(n, 1, mle)\n  tau.boot[b] <- 1/ (1 + psi.ml(x.boot))\n}\n\n# Bias via Parametric Bootstrap\ncat('--- PBoot / Bias ---\\n')\nround(mean(tau.boot) - tau.ml(xx), 3)\n\n# SE via Parametric Bootstrap\ncat('--- PBoot / SE ---\\n')\nround(sd(tau.boot), 3)\n\n# SE via Asymptotics\ncat('--- Asymptotic SE ---\\n')\nround(se.tau(xx), 3)\n\n# Parametric Bootstrap CI\ncat('--- PBoot CI(0.9) --\\n')\nround(c(lower = tau.ml(xx) - qnorm(1 - 0.1/2)*sd(tau.boot),\n        upper = tau.ml(xx) + qnorm(1 - 0.1/2)*sd(tau.boot)),3)\n\n\n# Non-parametric Bootstrap\nn <- length(xx)\nB <- 1000\ntau.nboot  <- rep(NA, B)\nset.seed(123)\nfor(b in 1:B){\n  idx <- sample(1:n, replace = T)\n  x.nboot <- xx[idx]\n  tau.nboot[b] <- 1/ (1 + psi.ml(x.nboot))\n}\n\n# Bias via Parametric Bootstrap\ncat('--- NBoot / Bias ---\\n')\nround(mean(tau.nboot) - tau.ml(xx), 3)\n\n# SE via Parametric Bootstrap\ncat('--- NBoot / SE ---\\n')\nround(sd(tau.nboot), 3)\n\n",
+    "created" : 1504788027664.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3079882295",
+    "id" : "C581E85B",
+    "lastKnownWriteTime" : 1504941519,
+    "last_content_update" : 1504941519079,
+    "path" : "C:/Users/Umbertojunior/Desktop/data science/Firts Semestr/SDS/exam/esercizi preparatori/esame3.R",
+    "project_path" : "esame3.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 3,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

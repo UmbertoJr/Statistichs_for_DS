@@ -1,0 +1,2 @@
+"0","d <- density(obs)"
+"0","lines(d,type= 'l', col='green')"

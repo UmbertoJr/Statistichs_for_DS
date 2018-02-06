@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "library(markovchain)\n\nstates <- c(1,2,3)\nByRow <- TRUE\ntransition_matrix <- matrix(data= c(0,1/2,1/2,\n                                    5/8,1/8,1/4,\n                                    2/3,1/3,0), byrow = ByRow,nrow=3)\nMc_states <- new('markovchain', states = states, byrow = ByRow, transitionMatrix = transition_matrix, name='Position')\n\ninitial_state <- c(1,0,0)\n\n\n\npi <- Mc_states^1000\n\n\n\nplot(Mc_states)\n\nn=100\nafter_n <- initial_state*(Mc_states^100)\n\nafter_n\n\n  \nstates <- c(1,2,3)\ntransition_matrix <- matrix(data= c(0,1/2,1/2,\n                                    5/8,1/8,1/4,\n                                    2/3,1/3,0), byrow = TRUE ,nrow=3)\n\n\n\n\nx1 <- 1\n\nnsample<-1000\nchain<-rep(NA,nsample+1) # vector that will hold\n# all the simulated values\nchain[1]<-x1             # starting value x1 assigned to chain[1]\nfor(t in 1:nsample){\n  chain[t+1]<-sample(states,size=1,prob=transition_matrix[chain[t],])\n}\n\n\n\n\n\nt0 <- 1\n\nntimes <- 500\nnsample<-1000\nt1000 <-rep(NA,ntimes)\n\nfor(i in 1:ntimes){\n  chain<-rep(NA,nsample+1) # vector that will hold\n  chain[1]<-t0             # starting value x1 assigned to chain[1]\n  for(t in 1:nsample){\n    chain[t+1]<-sample(states,size=1,prob=transition_matrix[chain[t],])\n  }\n  t1000[i]<- chain[nsample+1]\n}\n",
+    "created" : 1496001501794.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "4108278579",
+    "id" : "B04B70BB",
+    "lastKnownWriteTime" : 1496008581,
+    "last_content_update" : 1496008581648,
+    "path" : "C:/Users/Umbertojunior/Desktop/data science/Second Semestr/SDS 2/hw 2/re giorgio/prova_mcmc.R",
+    "project_path" : null,
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 6,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

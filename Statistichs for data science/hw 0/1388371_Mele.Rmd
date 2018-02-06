@@ -1,0 +1,117 @@
+---
+title: "Welcome Test"
+author: |
+  | Stat4DS2+DS (key: `tardella2017`)
+  | <https://elearning2.uniroma1.it/course/view.php?id=4951>
+date: "23/2/2017"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Umberto Junior Mele - 1388371
+
+0. Do you know how to use an RMarkdown file to answer these questions with text and R code?
+
+Yes, I Know
+
+1. Fix the *seed* to start the simulation of a single random variable from a (standard) uniform distribution on [0,1]. Use your *matricola* number as seed. 
+Call the simulated value `lambda`
+```{r,echo=TRUE}
+set.seed(1388371)
+lambda  = runif(1)
+lambda
+```
+
+2. Simulate 1000 random variables using the following code 
+```{r}
+X = runif(1000)
+Y = - lambda * log(X)
+hist(Y, freq=FALSE)
+```
+
+3. Can you show that the theoretical distribution of $Y$ is exponential with rate equal to `1/lambda`? [explain or ... do it!]
+
+The CDF of an exponential distribution is $F(x)= 1 - e^{\lambda x}$, and $F^{-1}(x) = - \frac{1}{\lambda}ln(1-x)$, so wee are sampling from the CDF of the exponential distro, where $\lambda=$`1/lambda`.
+
+
+4. Can you plot a graphical representation of the theoretical distribution? 
+
+```{r}
+hist(Y, freq=FALSE)
+curve(dexp(x, rate = 1/lambda), add=TRUE, col='blue')
+```
+
+5. Can you tell what is the relation between the theoretical curve of the density of $Y$ and the graph of the histogram?
+
+How I demostrated earlier, Y is a sampling of the eponential distribution with parameter `1/lambda`. So the theoretical distribution has to be Asymptotic distribution for the histogram, infact $Y_i$ converge on distribution on $Y$. ($Y_i \sim Y$)
+
+6. Suppose we have a random vector $(Z,Y)$ Do you know what a joint density $f_{Z,Y}(z,y)$ is?  What are the properties it must satisfy? 
+
+A joint density is a function that have as domain the random vector and as codominio a number $\in R^+$.
+
+Properties are :$$f_{Z,Y}(z,y) \geq 0 \quad \forall z,y$$
+$$\int \int  f_{Z,Y}(z,y) dz dy = 1$$
+$$ P(Z,Y \in R) = \int \int_R  f_{Z,Y}(z,y) dz dy$$
+   
+
+
+7. Can you derive in formula the distribution of $Z$? How it is called? 
+
+The distribution $Z$ is the marginal distribution of the joint density and we can write resolving:
+$$f_z(z) = \int f_{z,y}(z,y) dy = \int f_{z|y}(z| y)f_y(y) dy$$
+8. Conditionally on each simulated $Y_i=y_i$ (i=1,2,...,1000), simulate $Z_i = y_i*W_i$ where $W_i$ has distribution standard Normal and is independent of $Y_i$. What is the conditional distribution of $Z|Y=y$?
+
+We know that :
+$$f_z(z) = f_{y,w}(y,w) = f_y(y) \cdot f_w(w)$$
+the last equality comes from indipendence. So, for all $y_i \in Y_i$:
+$$f_{z|y = y_i}(w)= f_y(y_i) \cdot f_w(w) = f_y(y_i) \cdot N(0,1) = N(0,y_i^2)$$
+the last equality cames from $Z=cost \cdot W$ where:
+$$E(Z)= cost \cdot E(W) = 0$$
+$$Var(Z) = cost^2 \cdot Var(W) = cost^2$$
+
+9. Can you provide a simulation from the marginal distribution of $Z$? 
+
+```{r}
+sim = rep(NA, 10000)
+prov=rep(NA,10000)
+for(i in 1:10000){
+  y_i = rexp(1, rate=1/lambda)
+  prov[i]=y_i
+  z = rnorm(1, sd= y_i^2)
+  sim[i]=z
+}
+```
+Where sim is the simulation from the marginal $Z$ distribution because we are sampling y_i from a exponential distribution, so randomly, and the we are sampling from W|Y=y.
+
+
+10. Can you provide an approximation of the marginal distribution of $Z$? Please justify your answer. 
+
+Because $Z= Y \cdot W$ and for the independence of $Y$ and $W$:
+
+$$f_z(z) = \int f_w(w) \cdot f_y(z/w) \cdot \frac{1}{|w|} dw$$
+in our case: 
+$$f_z(z) = \int \frac{1}{\sqrt{2 \pi}} e^{-\frac{w^2}{2}} \cdot \lambda e^{- \lambda \frac{z}{w}} \cdot \frac{1}{|w|} dw$$
+But we should also approximate it by the marginal condition, using:
+$$f_z(z) = \int f_{z,y}(z,y) dy = \int f_{z|y}(z| y)f_y(y) dy$$
+so...
+
+$$f_z(z) = \int \frac{1}{\sqrt{2 y^2 \pi}} e^{-\frac{z^2}{2y^2}} \cdot \lambda e^{- \lambda y} dy$$
+
+```{r}
+plot(density(sim) )
+```
+
+11. How could you derive/write the joint distribution of $(Z,Y)$? 
+
+From the marginal properties we know that:
+$$f_{z,y}(z,y)= f_{z|y}(z) \cdot f_y(y)$$
+
+so...
+$$f_{z,y}(z,y)= \frac{1}{\sqrt{2 y^2 \pi}} e^{-\frac{z^2}{2y^2}} \cdot \lambda e^{- \lambda y}$$
